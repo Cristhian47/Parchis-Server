@@ -6,7 +6,20 @@ from . import settings
 def saludo(request):
     return HttpResponse("¡Hola, mundo!")
 
+def create_json_data(request):
+    # Crear un diccionario Python
+    datos = {
+        "username": "pepito123",
+        "color": "red"
+    }
+
+    # Crear un archivo JSON y escribir los datos del diccionario
+    with open(settings.DATA_FILE_PATH, "w") as archivo:
+        json.dump(datos, archivo)
+
 def get_json_data(request):
+
+    create_json_data(request)
     with open(settings.DATA_FILE_PATH, 'r') as f:
         data = json.load(f)
 
