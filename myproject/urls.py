@@ -34,5 +34,5 @@ def testing_method():
 
 urlpatterns = [
     path('', views.run_server, name='saludo'),
-    path('../', views.run_server, name='saludo'),
+    path('', views.get_json_data, name='saludo2'),
 ]

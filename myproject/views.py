@@ -1,7 +1,16 @@
 from django.http import HttpResponse
+import json
 
 def saludo(request):
     return HttpResponse("¡Hola, mundo!")
+
+def get_json_data(request):
+    with open('data.json', 'r') as f:
+        data = json.load(f)
+
+    data_str = json.dumps(data)
+
+    return HttpResponse(data_str)
 
 import socket
 import threading
