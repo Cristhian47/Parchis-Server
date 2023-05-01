@@ -1,1 +1,1 @@
-web: python manage.py runserver
+web: python manage.py runserver https://dev-testing.herokuapp.com/
