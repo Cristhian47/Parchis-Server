@@ -1,12 +1,13 @@
 from django.http import HttpResponse
 from django.http import JsonResponse
 import json
+from . import settings
 
 def saludo(request):
     return HttpResponse("¡Hola, mundo!")
 
 def get_json_data(request):
-    with open('data.json', 'r') as f:
+    with open(settings.DATA_FILE_PATH, 'r') as f:
         data = json.load(f)
 
     data_str = json.dumps(data)
