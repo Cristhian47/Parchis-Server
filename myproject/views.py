@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.http import JsonResponse
 import json
 
 def saludo(request):
@@ -11,6 +12,15 @@ def get_json_data(request):
     data_str = json.dumps(data)
 
     return HttpResponse(data_str)
+
+def get_data_from_json_file():
+    with open('data.json', 'r') as f:
+        data = json.load(f)
+    return data
+
+def serve_json_file(request):
+    data = get_data_from_json_file()
+    return JsonResponse(data, json_dumps_params={'indent': 2})
 
 import socket
 import threading
