@@ -1,1 +1,1 @@
-web: python manage.py runserver https://dev-testing.herokuapp.com/
+web: gunicorn app:app
