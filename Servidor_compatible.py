@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import time
 
 # Datos del servidor
 HOST = 'localhost'  # El host del servidor
@@ -9,7 +10,7 @@ PORT = 8001        # El puerto del servidor
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORT))
-servidor.listen(5)
+servidor.listen(10)
 print(f"Servidor esperando conexiones en {HOST}:{PORT}...")
 
 # Diccionario para manejar los colores disponibles
@@ -66,7 +67,7 @@ class Cliente(threading.Thread):
                 self.color = informacion["color"]
                 respuesta = {"color": informacion["color"], "disponible": True}
                 self.enviar_respuesta(respuesta)
-                broadcast({"jugador": self.ip, "nombre": self.nombre, "color": self.color})
+                broadcast({"jugador": self.name, "color": self.color})
             else:
                 respuesta = {"color": informacion["color"], "disponible": False}
                 self.enviar_respuesta(respuesta)
@@ -159,8 +160,6 @@ def recibir_clientes():
                 # Espera a que un cliente se conecte
                 connection, address = servidor.accept()
                 print('Conexión establecida por', address)
-                mensaje = "Conexión establecida con el servidor."
-                connection.sendall(mensaje.encode('utf-8'))
 
                 # Crea un hilo para manejar al cliente
                 thread = Cliente(connection, address, turno)
