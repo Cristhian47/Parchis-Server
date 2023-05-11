@@ -66,6 +66,7 @@ class Cliente(threading.Thread):
                 self.color = informacion["color"]
                 respuesta = {"color": informacion["color"], "disponible": True}
                 self.enviar_respuesta(respuesta)
+                broadcast({"jugador": self.ip, "nombre": self.nombre, "color": self.color})
             else:
                 respuesta = {"color": informacion["color"], "disponible": False}
                 self.enviar_respuesta(respuesta)
