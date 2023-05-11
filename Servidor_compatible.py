@@ -156,9 +156,10 @@ def aprobacion_partida():
 def recibir_clientes():
     turno = 1
     while True:
+        # Espera a que un cliente se conecte
+        connection, address = servidor.accept()
         if len(hilos_clientes) < 4 and iniciar_partida == False:
-                # Espera a que un cliente se conecte
-                connection, address = servidor.accept()
+                # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
                 print('Conexión establecida por', address)
 
                 # Crea un hilo para manejar al cliente
@@ -167,7 +168,7 @@ def recibir_clientes():
                 thread.start()
                 turno += 1
         else:
-            connection, address = servidor.accept()
+            # Si hay 4 clientes o ya inicio la partida, se rechaza la conexion
             mensaje = "No se pueden aceptar más clientes"
             connection.sendall(mensaje.encode('utf-8'))
             connection.close()
