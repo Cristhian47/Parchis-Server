@@ -21,6 +21,9 @@ hilos_clientes = []
 # Quien tiene el turno actual [IP]
 turno_actual = None
 
+# Parametro de parada para el hilo de recibir clientes
+iniciar_partida = False
+
 # Diccionario para el valor de los dados de la ultima jugada [1-6,1-6]
 dados = {
     "d1" : None,
@@ -151,7 +154,7 @@ def aprobacion_partida():
 def recibir_clientes():
     turno = 1
     while True:
-        if len(hilos_clientes) < 4:
+        if len(hilos_clientes) < 4 and iniciar_partida == False:
                 # Espera a que un cliente se conecte
                 connection, address = servidor.accept()
                 print('Conexión establecida por', address)
@@ -176,13 +179,13 @@ thread.start()
 # Ciclo principal de juego  
 while True:
     # Si hay 2 o más clientes, se puede iniciar la partida
-    while True:
+    while True: 
         iniciar_partida = aprobacion_partida()
         if iniciar_partida == True:
             mensaje = "Partida iniciada"
             broadcast(mensaje)
             break
-    
+            
     # Se definen los turnos lanzando el dado (se lanzan por orden de llegada)
     while True:
         break
