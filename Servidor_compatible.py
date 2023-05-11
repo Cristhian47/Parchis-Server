@@ -20,15 +20,15 @@ colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True
 hilos_clientes = []
 
 # Quien tiene el turno actual [IP]
-turno_actual = None
+turno_actual = 1
 
 # Parametro de parada para el hilo de recibir clientes
 iniciar_partida = False
 
 # Diccionario para el valor de los dados de la ultima jugada [1-6,1-6]
 dados = {
-    "d1" : None,
-    "d2" : None
+    "d1" : 1,
+    "d2" : 1
     }
 
 # Clase para manejar a los clientes
@@ -59,7 +59,7 @@ class Cliente(threading.Thread):
             respuesta = colores_disponibles
             self.enviar_respuesta(respuesta)
 
-        # El cliente selecciona un color
+        # El cliente se asigna un nombre y selecciona un color
         elif informacion["tipo"] == "seleccion_color":
             if colores_disponibles[informacion["color"]]:
                 colores_disponibles[informacion["color"]] = False
@@ -75,8 +75,19 @@ class Cliente(threading.Thread):
         # El cliente quiere iniciar la partida
         elif informacion["tipo"] == "solicitud_iniciar_partida":
             self.aprobacion = True
-            respuesta = {"jugador": self.ip, "aprobacion": True}
+            respuesta = {"aprobacion": True}
             self.enviar_respuesta(respuesta)
+
+        # El cliente lanza los dados
+        elif informacion["tipo"] == "lanzar_dados":
+            if self.turno == turno_actual:
+                dados = informacion["dados"]
+                respuesta = {"aprobacion": True}
+                self.enviar_respuesta(respuesta)
+                broadcast(informacion_partida())
+            else:
+                respuesta = {"jugador": self.ip, "aprobacion": False}
+                self.enviar_respuesta(respuesta)
 
         # ¿El cliente solicita la informacion de la partida?
         elif informacion["tipo"] == "solicitud_informacion_partida":
