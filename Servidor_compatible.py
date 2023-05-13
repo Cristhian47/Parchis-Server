@@ -63,6 +63,7 @@ class Cliente(threading.Thread):
 
         # El cliente se asigna un nombre y selecciona un color
         elif informacion["tipo"] == "seleccion_color":
+            global orden_turnos
             if colores_disponibles[informacion["color"]]:
                 orden_turnos.append(informacion["color"])
                 colores_disponibles[informacion["color"]] = False
@@ -83,6 +84,9 @@ class Cliente(threading.Thread):
 
         # El cliente lanza los dados
         elif informacion["tipo"] == "lanzar_dados":
+            global turno_actual
+            global ultimos_dados
+            global registro_dados
             if self.color == turno_actual:
                 ultimos_dados = informacion["dados"]
                 registro_dados[self.color] = informacion["dados"]
@@ -209,12 +213,12 @@ while True:
             broadcast({"iniciar_partida": True})
             break
             
-    # Se definen los turnos segun quien saca el mayor valor en los dados (se inicia con el primero en entrar)
-    orden_turnos = ordenar_turnos(orden_turnos[0], orden_turnos)
+    # Se definen los turnos segun quien saca el mayor valor en los dados (se inicia con el primero en seleccionar color)
+    turno_actual = orden_turnos[0]
+    orden_turnos = ordenar_turnos(turno_actual, orden_turnos)
 
     # Se espera a que todos los jugadores lancen los dados para definir el orden de los turnos
     while True:
-        print(orden_turnos)
         # Una vez que todos los jugadores hayan lanzado los dados, se busca quien saco el mayor valor
         if len(registro_dados) == len(orden_turnos):
             primer_lugar = mayor_valor(registro_dados)
@@ -223,7 +227,7 @@ while True:
                 for cliente in hilos_clientes:
                     if cliente.color not in orden_turnos:
                         orden_turnos.append(cliente.color)
-                orden_turnos = ordenar_turnos(primer_lugar, orden_turnos)
+                orden_turnos = ordenar_turnos(primer_lugar[0], orden_turnos)
                 break
             # Si hay un empate con el valor maximo, se debe hacer un desempate
             else:
@@ -234,4 +238,4 @@ while True:
 
     # Una vez definidos los turnos, se inicia el juego
     while True:
-        break
+        pass
