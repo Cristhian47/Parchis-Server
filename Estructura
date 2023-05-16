@@ -1,0 +1,21 @@
+game = {
+    "turno_actual" : "Red",
+
+    "ultimos_dados" : {
+        "D1":5,
+        "D2":1
+        },
+
+    "IPJugador4" : {
+        "nombre":"Caos",
+        "color":"Red",
+        "F1":"Carcel",
+        "F2":12,
+        "F3":28,
+        "F4":51,
+        "cont_F1":0,
+        "cont_F2":35,
+        "cont_F3":2,
+        "cont_F4":8
+        }
+}

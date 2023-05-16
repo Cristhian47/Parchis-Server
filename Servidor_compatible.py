@@ -1,3 +1,24 @@
+'''
+SERVIDOR PARQUES PROYECTO FINAL SISTEMAS DISTRIBUIDOS
+
+SOLICITUDES DE ENTRADA
+{"tipo": "solicitud_color"}
+{"tipo": "seleccion_color", "nombre": "Sarah", "color": "Red"}
+{"tipo": "solicitud_iniciar_partida"}
+{"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
+{"tipo: "sacar_ficha", "ficha": "F1"}
+
+RESPUESTAS DE SALIDA
+{"tipo": "aprobado"}
+{"tipo": "denegado", "razon": "mensaje"}
+{"tipo": "iniciar_partida"}
+{"tipo": "sacar_ficha"}
+
+BROADCAST DE SALIDA
+{"jugador": "Sarah", "color": "Red"}
+{"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
+'''
+
 import socket
 import threading
 import json
@@ -22,7 +43,7 @@ colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True
 # Variable para el color del turno actual
 turno_actual = None
 
-# Lista para el orden de los colores de una ronda
+# Lista para el orden de los turnos en la partida
 orden_turnos = []
 
 # Variable que indica el estado actual del juego (Lobby, Turnos, Juego)
@@ -33,6 +54,9 @@ ultimos_dados = {"D1" : None, "D2" : None}
 
 # Lista para el registro de los dados de una ronda
 registro_dados = {}
+
+# Variable para contar los pares seguidos
+pares_seguidos = 0
 
 # Casillas especiales para los jugadores
 casillas_seguras = [5,12,17,22,26,34,39,46,51,56,63,68]
@@ -46,23 +70,25 @@ class Cliente(threading.Thread):
         self.connection = connection
         self.ip, self.puerto = address
         self.iniciar_partida = False
+        self.turnos = 3
         self.nombre = None
         self.color = None
-        self.f1 = "Carcel"
-        self.f2 = "Carcel"
-        self.f3 = "Carcel"
-        self.f4 = "Carcel"
-        self.cont_f1 = 0
-        self.cont_f2 = 0
-        self.cont_f3 = 0
-        self.cont_f4 = 0
+        self.F1 = "Carcel"
+        self.F2 = "Carcel"
+        self.F3 = "Carcel"
+        self.F4 = "Carcel"
+        self.cont_F1 = 0
+        self.cont_F2 = 0
+        self.cont_F3 = 0
+        self.cont_F4 = 0
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, msg):
         informacion = json.loads(msg)
 
-        # El cliente solicita los colores disponibles {"tipo": solicitud_color"}
+        # El cliente solicita los colores disponibles {"tipo": "solicitud_color"}
         if informacion["tipo"] == "solicitud_color":
+            # Se envia la respuesta al cliente
             respuesta = colores_disponibles
             self.enviar_respuesta(respuesta)
 
@@ -72,90 +98,147 @@ class Cliente(threading.Thread):
                 colores_disponibles[informacion["color"]] = False
                 self.name = informacion["nombre"]
                 self.color = informacion["color"]
-                respuesta = {"color": informacion["color"], "disponible": True}
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "aprobado"}
                 self.enviar_respuesta(respuesta)
-                broadcast({"jugador": self.name, "color": self.color})
+                # Se envia el mensaje de seleccion de color a todos los clientes
+                mensaje = {"jugador": self.name, "color": self.color}
+                broadcast(mensaje)
             else:
-                respuesta = {"color": informacion["color"], "disponible": False}
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "denegado", "razon": "color no disponible"}
                 self.enviar_respuesta(respuesta)
 
         # El cliente quiere iniciar la partida {"tipo": "solicitud_iniciar_partida"}
         elif informacion["tipo"] == "solicitud_iniciar_partida":
             self.iniciar_partida = True
-            # Se envia el mensaje de aprobacion al cliente
-            respuesta = {"jugador": self.name, "iniciar_partida": True}
+            # Se envia la respuesta al cliente
+            respuesta = {"tipo": "aprobado"}
             self.enviar_respuesta(respuesta)
             # Se valida si todos los clientes quieren iniciar la partida
             if aprobacion_partida() == True:
                 # Se ordenan los turnos segun el orden de los colores
                 ordenar_turnos(hilos_clientes[0].color)
                 # Se envia el mensaje de partida iniciada a todos los clientes
-                broadcast({"iniciar_partida": True})
+                mensaje = {"tipo": "iniciar_partida"}
+                broadcast(mensaje)
 
         # El cliente lanza los dados {"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
         elif informacion["tipo"] == "lanzar_dados":
             # Se valida que sea el turno del cliente
             if self.color == turno_actual:
-                # Se actualiza el registro de los dados
+                # Se actualiza el registro de los ultimos dados
                 global ultimos_dados
                 ultimos_dados = informacion["dados"]
-                global registro_dados
-                registro_dados[self.color] = informacion["dados"]
-                # Dependiendo del estado del juego se ejecuta una funcion
+                # Si la partida esta en estado de turnos
                 if estado_partida == "Turnos":
+                    # Se actualiza el registro de los dados de la ronda
+                    global registro_dados
+                    registro_dados[self.color] = informacion["dados"]
                     definir_turnos()
-                #elif estado_partida == "Juego":
-                #    en_juego()
-                # Se envia el mensaje de aprobacion al cliente
-                respuesta = {"aprobacion": True}
-                self.enviar_respuesta(respuesta)
-                # Se envia la informacion de la partida actualizada a todos los clientes
-                broadcast(informacion_partida())
+                # Si la partida esta en estado de juego
+                elif estado_partida == "Juego":
+                    # Se comprueba si saco pares
+                    if ultimos_dados["D1"] == ultimos_dados["D2"]:
+                        #Si saca par, tiene derecho a otro turno
+                        self.turnos == 1
+                        # Si saca 3 pares seguidos saca ficha
+                        global pares_seguidos
+                        pares_seguidos += 1
+                        if pares_seguidos == 3:
+                            # Se envia la respuesta al cliente
+                            respuesta = {"tipo": "sacar_ficha"}
+                            self.enviar_respuesta(respuesta)
+                    else:
+                        # Si no saca par, se reinicia el contador de pares seguidos
+                        global pares_seguidos
+                        pares_seguidos = 0
+                        # Se comprueba si aun tiene turnos
+                        if self.turnos == 0:
+                            # Se actualiza el turno actual
+                            siguiente_turno()
+                        else:
+                            self.turnos -= 1
+                        # Se envia la respuesta al cliente
+                        respuesta = {"tipo": "aprobado"}
+                        self.enviar_respuesta(respuesta)
             else:
-                respuesta = {"aprobacion": False}
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "denegado", "razon": "no es su turno"}
                 self.enviar_respuesta(respuesta)
+
+        # El cliente saca una ficha {"tipo": "sacar_ficha", "ficha": "F1"}
+        elif informacion["tipo"] == "sacar_ficha":
+            # Se valida que sea el turno del cliente y que pueda sacar ficha a causa de los 3 pares seguidos
+            global pares_seguidos
+            if self.color == turno_actual and pares_seguidos == 3:
+                # Se valida que la ficha sea valida
+                if informacion["ficha"] in ["F1", "F2", "F3", "F4"]:
+                    # Se actualiza la posicion de la ficha
+                    self.informacion["ficha"] = "Meta"
+                    # Se reinicia el contador de pares seguidos
+                    pares_seguidos = 0
+                    # Se envia la respuesta al cliente
+                    respuesta = {"tipo": "aprobado"}
+                    self.enviar_respuesta(respuesta)
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
+                else:
+                    # Se envia la respuesta al cliente
+                    respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
+                    self.enviar_respuesta(respuesta)
 
         # El cliente mueve una ficha {"tipo": "mover_ficha", "D1":"F2", "D2":"F4}
         elif informacion["tipo"] == "mover_ficha":
             # Se valida que sea el turno del cliente
             if self.color == turno_actual:
+
+
                 # Se actualiza la posicion de la ficha
                 match informacion["D1"]:
                     case "F1":
-                        self.f1 += ultimos_dados["D1"]
-                        self.cont_f1 += ultimos_dados["D1"]
+                        self.F1 += ultimos_dados["D1"]
+                        self.cont_F1 += ultimos_dados["D1"]
                     case "F2":
-                        self.f2 += ultimos_dados["D1"]
-                        self.cont_f2 += ultimos_dados["D1"]
+                        self.F2 += ultimos_dados["D1"]
+                        self.cont_F2 += ultimos_dados["D1"]
                     case "F3":
-                        self.f3 += ultimos_dados["D1"]
-                        self.cont_f3 += ultimos_dados["D1"]
+                        self.F3 += ultimos_dados["D1"]
+                        self.cont_F3 += ultimos_dados["D1"]
                     case "F4":
-                        self.f4 += ultimos_dados["D1"]
-                        self.cont_f4 += ultimos_dados["D1"]
+                        self.F4 += ultimos_dados["D1"]
+                        self.cont_F4 += ultimos_dados["D1"]
                 match informacion["D2"]:
                     case "F1":
-                        self.f1 += ultimos_dados["D2"]
-                        self.cont_f1 += ultimos_dados["D2"]
+                        self.F1 += ultimos_dados["D2"]
+                        self.cont_F1 += ultimos_dados["D2"]
                     case "F2":
-                        self.f2 += ultimos_dados["D2"]
-                        self.cont_f2 += ultimos_dados["D2"]
+                        self.F2 += ultimos_dados["D2"]
+                        self.cont_F2 += ultimos_dados["D2"]
                     case "F3":
-                        self.f3 += ultimos_dados["D2"]
-                        self.cont_f3 += ultimos_dados["D2"]
+                        self.F3 += ultimos_dados["D2"]
+                        self.cont_F3 += ultimos_dados["D2"]
                     case "F4":
-                        self.f4 += ultimos_dados["D2"]
-                        self.cont_f4 += ultimos_dados["D2"]
-                # Se actualiza el turno actual
-                siguiente_turno()
-                # Se envia el mensaje de aprobacion al cliente
-                respuesta = {"aprobacion": True}
+                        self.F4 += ultimos_dados["D2"]
+                        self.cont_F4 += ultimos_dados["D2"]
+
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "aprobado"}
                 self.enviar_respuesta(respuesta)
                 # Se envia la informacion de la partida actualizada a todos los clientes
-                broadcast(informacion_partida())
+                mensaje = informacion_partida()
+                broadcast(mensaje)
             else:
-                respuesta = {"aprobacion": False}
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "denegado", "razon": "no es su turno"}
                 self.enviar_respuesta(respuesta)
+
+    # Funcion que retorna True si todas las fichas del jugador estan en la carcel
+    def fichas_carcel(self):
+        if self.F1 == "Carcel" and self.F2 == "Carcel" and self.F3 == "Carcel" and self.F4 == "Carcel":
+            return True
+        return False
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
@@ -188,14 +271,14 @@ def informacion_partida():
             cliente.ip : {
                     "nombre": cliente.nombre,
                     "color": cliente.color,
-                    "f1": cliente.f1,
-                    "f2": cliente.f2,
-                    "f3": cliente.f3,
-                    "f4": cliente.f4,
-                    "cont_f1": cliente.cont_f1,
-                    "cont_f2": cliente.cont_f2,
-                    "cont_f3": cliente.cont_f3,
-                    "cont_f4": cliente.cont_f4
+                    "F1": cliente.F1,
+                    "F2": cliente.F2,
+                    "F3": cliente.F3,
+                    "F4": cliente.F4,
+                    "cont_F1": cliente.cont_F1,
+                    "cont_F2": cliente.cont_F2,
+                    "cont_F3": cliente.cont_F3,
+                    "cont_F4": cliente.cont_F4
                 }
             }
         partida.update(informacion_cliente)
