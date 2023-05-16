@@ -25,8 +25,8 @@ turno_actual = None
 # Lista para el orden de los colores de una ronda
 orden_turnos = []
 
-# Parametro de parada para el hilo de recibir clientes
-iniciar_partida = False
+# Variable que indica el estado actual del juego (Lobby, Turnos, Juego)
+estado_partida = "Lobby"
 
 # Diccionario para el valor de los dados de la ultima jugada (1-6,1-6)
 ultimos_dados = {"D1" : None, "D2" : None}
@@ -34,15 +34,20 @@ ultimos_dados = {"D1" : None, "D2" : None}
 # Lista para el registro de los dados de una ronda
 registro_dados = {}
 
+# Casillas especiales para los jugadores
+casillas_seguras = [5,12,17,22,26,34,39,46,51,56,63,68]
+casillas_giro = {"Yellow": 68, "Blue": 17, "Green": 34, "Red": 51}
+casillas_salida = {"Yellow": 5, "Blue": 22, "Green": 39, "Red": 56}
+
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
     def __init__(self, connection, address):
         super(Cliente, self).__init__()
         self.connection = connection
         self.ip, self.puerto = address
+        self.iniciar_partida = False
         self.nombre = None
         self.color = None
-        self.aprobacion = False
         self.f1 = "Carcel"
         self.f2 = "Carcel"
         self.f3 = "Carcel"
@@ -56,16 +61,14 @@ class Cliente(threading.Thread):
     def procesar_informacion(self, msg):
         informacion = json.loads(msg)
 
-        # El cliente solicita los colores disponibles
+        # El cliente solicita los colores disponibles {"tipo": solicitud_color"}
         if informacion["tipo"] == "solicitud_color":
             respuesta = colores_disponibles
             self.enviar_respuesta(respuesta)
 
-        # El cliente se asigna un nombre y selecciona un color
+        # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
         elif informacion["tipo"] == "seleccion_color":
-            global orden_turnos
             if colores_disponibles[informacion["color"]]:
-                orden_turnos.append(informacion["color"])
                 colores_disponibles[informacion["color"]] = False
                 self.name = informacion["nombre"]
                 self.color = informacion["color"]
@@ -76,45 +79,83 @@ class Cliente(threading.Thread):
                 respuesta = {"color": informacion["color"], "disponible": False}
                 self.enviar_respuesta(respuesta)
 
-        # El cliente quiere iniciar la partida
+        # El cliente quiere iniciar la partida {"tipo": "solicitud_iniciar_partida"}
         elif informacion["tipo"] == "solicitud_iniciar_partida":
-            self.aprobacion = True
-            respuesta = {"aprobacion": True}
+            self.iniciar_partida = True
+            # Se envia el mensaje de aprobacion al cliente
+            respuesta = {"jugador": self.name, "iniciar_partida": True}
             self.enviar_respuesta(respuesta)
+            # Se valida si todos los clientes quieren iniciar la partida
+            if aprobacion_partida() == True:
+                # Se ordenan los turnos segun el orden de los colores
+                ordenar_turnos(hilos_clientes[0].color)
+                # Se envia el mensaje de partida iniciada a todos los clientes
+                broadcast({"iniciar_partida": True})
 
-        # El cliente lanza los dados
+        # El cliente lanza los dados {"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
         elif informacion["tipo"] == "lanzar_dados":
-            global turno_actual
-            global ultimos_dados
-            global registro_dados
+            # Se valida que sea el turno del cliente
             if self.color == turno_actual:
+                # Se actualiza el registro de los dados
+                global ultimos_dados
                 ultimos_dados = informacion["dados"]
+                global registro_dados
                 registro_dados[self.color] = informacion["dados"]
-                turno_actual = siguiente_turno(turno_actual)
+                # Dependiendo del estado del juego se ejecuta una funcion
+                if estado_partida == "Turnos":
+                    definir_turnos()
+                #elif estado_partida == "Juego":
+                #    en_juego()
+                # Se envia el mensaje de aprobacion al cliente
                 respuesta = {"aprobacion": True}
                 self.enviar_respuesta(respuesta)
+                # Se envia la informacion de la partida actualizada a todos los clientes
                 broadcast(informacion_partida())
             else:
                 respuesta = {"aprobacion": False}
                 self.enviar_respuesta(respuesta)
 
-    # Funcion para enviar la informacion actual del cliente
-    def informacion(self):
-        respuesta = {
-            self.ip : {
-                    "nombre": self.nombre,
-                    "color": self.color,
-                    "f1": self.f1,
-                    "f2": self.f2,
-                    "f3": self.f3,
-                    "f4": self.f4,
-                    "cont_f1": self.cont_f1,
-                    "cont_f2": self.cont_f2,
-                    "cont_f3": self.cont_f3,
-                    "cont_f4": self.cont_f4
-                }
-            }
-        return respuesta
+        # El cliente mueve una ficha {"tipo": "mover_ficha", "D1":"F2", "D2":"F4}
+        elif informacion["tipo"] == "mover_ficha":
+            # Se valida que sea el turno del cliente
+            if self.color == turno_actual:
+                # Se actualiza la posicion de la ficha
+                match informacion["D1"]:
+                    case "F1":
+                        self.f1 += ultimos_dados["D1"]
+                        self.cont_f1 += ultimos_dados["D1"]
+                    case "F2":
+                        self.f2 += ultimos_dados["D1"]
+                        self.cont_f2 += ultimos_dados["D1"]
+                    case "F3":
+                        self.f3 += ultimos_dados["D1"]
+                        self.cont_f3 += ultimos_dados["D1"]
+                    case "F4":
+                        self.f4 += ultimos_dados["D1"]
+                        self.cont_f4 += ultimos_dados["D1"]
+                match informacion["D2"]:
+                    case "F1":
+                        self.f1 += ultimos_dados["D2"]
+                        self.cont_f1 += ultimos_dados["D2"]
+                    case "F2":
+                        self.f2 += ultimos_dados["D2"]
+                        self.cont_f2 += ultimos_dados["D2"]
+                    case "F3":
+                        self.f3 += ultimos_dados["D2"]
+                        self.cont_f3 += ultimos_dados["D2"]
+                    case "F4":
+                        self.f4 += ultimos_dados["D2"]
+                        self.cont_f4 += ultimos_dados["D2"]
+                # Se actualiza el turno actual
+                siguiente_turno()
+                # Se envia el mensaje de aprobacion al cliente
+                respuesta = {"aprobacion": True}
+                self.enviar_respuesta(respuesta)
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                broadcast(informacion_partida())
+            else:
+                respuesta = {"aprobacion": False}
+                self.enviar_respuesta(respuesta)
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
@@ -131,17 +172,33 @@ class Cliente(threading.Thread):
 
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
-        for client in hilos_clientes:
-            client.enviar_respuesta(mensaje)
+    for client in hilos_clientes:
+        client.enviar_respuesta(mensaje)
 
 # Funcion que retorna la informacion de la partida
 def informacion_partida():
+    # Se crea el diccionario con la informacion de la partida
     partida = {
         "turno_actual" : turno_actual,
         "ultimos_dados" : ultimos_dados,
     }
+    # Se agrega la informacion de cada cliente
     for cliente in hilos_clientes:
-        partida.update(cliente.informacion())
+        informacion_cliente = {
+            cliente.ip : {
+                    "nombre": cliente.nombre,
+                    "color": cliente.color,
+                    "f1": cliente.f1,
+                    "f2": cliente.f2,
+                    "f3": cliente.f3,
+                    "f4": cliente.f4,
+                    "cont_f1": cliente.cont_f1,
+                    "cont_f2": cliente.cont_f2,
+                    "cont_f3": cliente.cont_f3,
+                    "cont_f4": cliente.cont_f4
+                }
+            }
+        partida.update(informacion_cliente)
     return partida
 
 # Funcion que valida si todos los usuarios (minimo 2) quieren iniciar la partida
@@ -150,44 +207,76 @@ def aprobacion_partida():
         aprobaciones = 0
         # Se valida si todos los clientes quieren iniciar la partida
         for cliente in hilos_clientes:
-            if cliente.aprobacion == True:
+            if cliente.iniciar_partida == True:
                 aprobaciones += 1
         if aprobaciones == len(hilos_clientes):
+            global estado_partida
+            estado_partida = "Turnos"
             return True
     return False
 
 # Funcion que retorna el o los colores con el valor maximo de la suma de los dados
-def mayor_valor(diccionario):
+def mayor_valor(dados):
     # Se obtiene el valor maximo de la suma de los dados
-    mayor_suma = max(diccionario.values(), key=lambda x: x['D1'] + x['D2'])['D1'] + max(diccionario.values(), key=lambda x: x['D1'] + x['D2'])['D2']
+    mayor_suma = max(dados.values(), key=lambda x: x['D1'] + x['D2'])['D1'] + max(dados.values(), key=lambda x: x['D1'] + x['D2'])['D2']
     # Se obtiene el o los colores con el valor maximo de la suma de los dados
-    mayor_valor = [k for k, v in diccionario.items() if v['D1'] + v['D2'] == mayor_suma]
+    mayor_valor = [k for k, v in dados.items() if v['D1'] + v['D2'] == mayor_suma]
     return mayor_valor
 
-# Funcion que retorna el color del siguiente turno
-def siguiente_turno(turno_actual):
-    if turno_actual in orden_turnos:
-        # Se obtiene el índice del color actual
-        indice_siguiente = (orden_turnos.index(turno_actual) + 1) % len(orden_turnos)
-        return orden_turnos[indice_siguiente]
+# Funcion que actualiza el turno
+def siguiente_turno():
+    global turno_actual
+    # Se obtiene el índice del siguiente color
+    indice_siguiente = (orden_turnos.index(turno_actual) + 1) % len(orden_turnos)
+    # Se actualiza el turno actual
+    turno_actual = orden_turnos[indice_siguiente]
 
 # Funcion que asigna los turnos para pasar a la derecha (Green->Red->Yellow->Blue->Green...)
-def ordenar_turnos(primer_lugar, orden_turnos):
+def ordenar_turnos(inicio):
+    global orden_turnos
+    global turno_actual
+    # Se define el orden de los colores
     orden_colores = ["Green", "Red", "Yellow", "Blue"]
     # Se obtiene la posición del color en la lista del orden
-    inicio = orden_colores.index(primer_lugar)
+    posicion = orden_colores.index(inicio)
     # Se crea una nueva lista con los colores en el orden correcto
-    nuevo_orden = orden_colores[inicio:] + orden_colores[:inicio]
+    nuevo_orden = orden_colores[posicion:] + orden_colores[:posicion]
+    # Se agregan los colores de los jugadores a la lista de turnos
+    for cliente in hilos_clientes:
+        if cliente.color not in orden_turnos:
+            orden_turnos.append(cliente.color)
     # Se crea una nueva lista ordenada de acuerdo al nuevo orden
-    nuevo_orden_turnos = [c for c in nuevo_orden if c in orden_turnos]
-    return nuevo_orden_turnos
+    orden_turnos = [color for color in nuevo_orden if color in orden_turnos]
+    # Se define el turno actual
+    turno_actual = orden_turnos[0]
+
+# Funcion que define el orden de los turnos 
+def definir_turnos():
+    global orden_turnos
+    global registro_dados
+    # Una vez que todos los jugadores hayan lanzado los dados, se busca quien saco el mayor valor
+    if len(registro_dados) == len(orden_turnos):
+        # Se busca el jugador con el valor maximo
+        primer_lugar = mayor_valor(registro_dados)
+        # Si hay un jugador con el valor maximo, se asignan los turnos a su derecha
+        if len(primer_lugar) == 1:
+            ordenar_turnos(primer_lugar[0])
+            global estado_partida
+            estado_partida = "Juego"
+        # Si hay un empate con el valor maximo, se debe hacer un desempate
+        else:
+            # Se reasignan los turnos para que solo lancen los jugadores del empate
+            orden_turnos = [color for color in orden_turnos if color in primer_lugar]
+            # Se limpia el registro de lanzamientos
+            registro_dados.clear()
 
 # Funcion que actua como receptor de clientes (se ejecuta en un hilo)
 def recibir_clientes():
     while True:
         # Espera a que un cliente se conecte
         connection, address = servidor.accept()
-        if len(hilos_clientes) < 4 and iniciar_partida == False:
+        print(len(hilos_clientes), estado_partida)
+        if len(hilos_clientes) < 4 and estado_partida == "Lobby":
                 # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
                 print('Conexión establecida por', address)
                 # Crea un hilo para manejar al cliente
@@ -203,39 +292,3 @@ def recibir_clientes():
 # Hilo que actua como receptor de clientes
 thread = threading.Thread(target=recibir_clientes)
 thread.start()
-
-# Ciclo principal de juego  
-while True:
-    # Se espera a que todos los jugadores quieran iniciar la partida
-    while True: 
-        iniciar_partida = aprobacion_partida()
-        if iniciar_partida == True:
-            broadcast({"iniciar_partida": True})
-            break
-            
-    # Se definen los turnos segun quien saca el mayor valor en los dados (se inicia con el primero en seleccionar color)
-    turno_actual = orden_turnos[0]
-    orden_turnos = ordenar_turnos(turno_actual, orden_turnos)
-
-    # Se espera a que todos los jugadores lancen los dados para definir el orden de los turnos
-    while True:
-        # Una vez que todos los jugadores hayan lanzado los dados, se busca quien saco el mayor valor
-        if len(registro_dados) == len(orden_turnos):
-            primer_lugar = mayor_valor(registro_dados)
-            # Si hay un jugador con el valor maximo, se asignan los turnos a su derecha
-            if len(primer_lugar) == 1:
-                for cliente in hilos_clientes:
-                    if cliente.color not in orden_turnos:
-                        orden_turnos.append(cliente.color)
-                orden_turnos = ordenar_turnos(primer_lugar[0], orden_turnos)
-                break
-            # Si hay un empate con el valor maximo, se debe hacer un desempate
-            else:
-                # Se reasignan los turnos para que solo lancen los jugadores del empate
-                orden_turnos = [color for color in orden_turnos if color in primer_lugar]
-                # Se limpia el registro de lanzamientos
-                registro_dados.clear()
-
-    # Una vez definidos los turnos, se inicia el juego
-    while True:
-        pass
