@@ -6,16 +6,20 @@ game = {
         "D2":1
         },
 
-    "IPJugador4" : {
-        "nombre":"Caos",
+    "nombre" : {
+        "nombre":"Juan",
         "color":"Red",
-        "F1":"Carcel",
-        "F2":12,
-        "F3":28,
-        "F4":51,
-        "cont_F1":0,
-        "cont_F2":35,
-        "cont_F3":2,
-        "cont_F4":8
+        "fichas": {
+            "F1": "Carcel",
+            "F2": "Carcel",
+            "F3": "Carcel",
+            "F4": "Carcel"
+            },
+        "contadores_fichas": {
+            "F1": 0,
+            "F2": 0,
+            "F3": 0,
+            "F4": 0
+            }
         }
 }
