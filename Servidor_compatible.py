@@ -139,25 +139,30 @@ class Cliente(threading.Thread):
 
     # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
     def procesar_seleccion_color(self, informacion):
-        color = informacion["color"]
-        if color in ["Yellow", "Blue", "Green", "Red"]:
-            if colores_disponibles[color]:
-                colores_disponibles[color] = False
-                self.nombre = informacion["nombre"]
-                self.color = color
-                # Se envia la respuesta al cliente
-                respuesta = {"tipo": "aprobado"}
-                self.enviar_respuesta(respuesta)
-                # Se envia el mensaje de seleccion de color a todos los clientes
-                mensaje = {"jugador": self.nombre, "color": self.color}
-                broadcast(mensaje)
+        if self.nombre == None and self.color == None:
+            color = informacion["color"]
+            if color in ["Yellow", "Blue", "Green", "Red"]:
+                if colores_disponibles[color]:
+                    colores_disponibles[color] = False
+                    self.nombre = informacion["nombre"]
+                    self.color = color
+                    # Se envia la respuesta al cliente
+                    respuesta = {"tipo": "aprobado"}
+                    self.enviar_respuesta(respuesta)
+                    # Se envia el mensaje de seleccion de color a todos los clientes
+                    mensaje = {"jugador": self.nombre, "color": self.color}
+                    broadcast(mensaje)
+                else:
+                    # Se envia la respuesta al cliente
+                    respuesta = {"tipo": "denegado", "razon": "color no disponible"}
+                    self.enviar_respuesta(respuesta)
             else:
                 # Se envia la respuesta al cliente
-                respuesta = {"tipo": "denegado", "razon": "color no disponible"}
+                respuesta = {"tipo": "denegado", "razon": "color no valido"}
                 self.enviar_respuesta(respuesta)
         else:
             # Se envia la respuesta al cliente
-            respuesta = {"tipo": "denegado", "razon": "color no valido"}
+            respuesta = {"tipo": "denegado", "razon": "ya ha seleccionado un color"}
             self.enviar_respuesta(respuesta)
 
     # El cliente quiere iniciar la partida {"tipo": "solicitud_iniciar_partida"}
@@ -200,7 +205,7 @@ class Cliente(threading.Thread):
                     # Se definen los turnos segun quien saco el mayor valor
                     definir_turnos()
                 else:
-                    # # Se actualiza el turno
+                    # Se actualiza el turno
                     siguiente_turno()
                 # Se envia la respuesta al cliente
                 respuesta = {"tipo": "aprobado"}
@@ -332,51 +337,71 @@ class Cliente(threading.Thread):
 
         # Se extrae la informacion de la ficha
         ficha = informacion["ficha"]
-        nueva_posicion = self.fichas[ficha] + ultimos_dados["D1"] + ultimos_dados["D2"]
+        # Se valida que la ficha sea valida
+        if ficha in self.fichas:
+            # Se comprueba si la ficha no esta en la carcel
+            if self.fichas[ficha] != "Carcel":
+                dados_suma = ultimos_dados["D1"] + ultimos_dados["D2"]
+                nueva_posicion = self.fichas[ficha] + dados_suma
+                nuevo_contador = self.contadores_fichas[ficha] + dados_suma
 
-        # Se comprueba si la ficha esta en la escalera
-        if self.comprobar_giro(ficha):
-            # Se calcula la nueva posicion
-            pass
-        # Se comprueba si la ficha excede el limite del mapa
-        elif nueva_posicion > 68:
-            # Se calcula la nueva posicion
-            nueva_posicion = nueva_posicion - 68
+                # Llego a la meta sin excederse
+                if nuevo_contador == 71:
+                    # Llego a la meta
+                    nueva_posicion = "Meta"
+                # Esta en la escalera
+                elif  63 < nuevo_contador < 71:
+                    # Se calcula la nueva posicion
+                    nueva_posicion = 69 + (nuevo_contador - 63)
+                # No esta en la escalera
+                elif nuevo_contador <= 63:      
+                    # Se comprueba si la ficha excede el limite del mapa
+                    if nueva_posicion > 68:
+                        # Se calcula la nueva posicion
+                        nueva_posicion = nueva_posicion - 68
+                    # Se comprueba si la ficha puede comer a otras
+                    if not self.comprobar_seguro(ficha):
+                        for cliente in hilos_clientes:
+                            if cliente.color != self.color:
+                                for ficha, posicion in cliente.fichas.items():
+                                    if posicion == nueva_posicion:
+                                        cliente.fichas[ficha] = "Carcel"
+                                        cliente.contadores_fichas[ficha] = 0
 
-        # Se comprueba si la ficha puede comer a otras
-        if not self.comprobar_seguro(ficha):
-            for cliente in hilos_clientes:
-                if cliente.color != self.color:
-                    for ficha, posicion in cliente.fichas.items():
-                        if posicion == nueva_posicion:
-                            cliente.fichas[ficha] = "Carcel"
-                            cliente.contadores_fichas[ficha] = 0
+                # Se actualiza la posicion de la ficha
+                self.fichas[ficha] = nueva_posicion
+                # Se actualiza el contador de la ficha
+                self.contadores_fichas[ficha] = nuevo_contador
 
-        # Se actualiza la posicion de la ficha
-        self.fichas[ficha] = nueva_posicion
-        self.contadores_fichas[ficha] += ultimos_dados["D1"] + ultimos_dados["D2"]
-
-        # Se comprueba si todas las fichas estan en la meta
-        if self.comprobar_meta():
-            # Se actualiza el estado de la partida
-            estado_partida = "finalizada"
-            # Se envia el mensaje a todos los clientes
-            mensaje = ({"tipo": "finalizar", "ganador": self.color})
-            broadcast(mensaje)
-        else:
-            # Se actualiza los turnos
-            if self.turnos == 0:
-                siguiente_turno()
+                # Se comprueba si todas las fichas estan en la meta
+                if self.comprobar_meta():
+                    # Se actualiza el estado de la partida
+                    estado_partida = "finalizada"
+                    # Se envia el mensaje a todos los clientes
+                    mensaje = ({"tipo": "finalizar", "ganador": self.color})
+                    broadcast(mensaje)
+                else:
+                    # Se actualiza los turnos
+                    if self.turnos == 0:
+                        siguiente_turno()
+                    else:
+                        self.turnos -= 1
+                    # Se actualiza la solicitud esperada
+                    solicitud_esperada = "lanzar_dados"
+                    # Se envia la respuesta al cliente
+                    respuesta = {"tipo": "aprobado"}
+                    self.enviar_respuesta(respuesta)
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
             else:
-                self.turnos -= 1
-            # Se actualiza la solicitud esperada
-            solicitud_esperada = "lanzar_dados"
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "denegado", "razon": "ficha esta en la carcel"}
+                self.enviar_respuesta(respuesta)
+        else:
             # Se envia la respuesta al cliente
-            respuesta = {"tipo": "aprobado"}
+            respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
             self.enviar_respuesta(respuesta)
-            # Se envia la informacion de la partida actualizada a todos los clientes
-            mensaje = informacion_partida()
-            broadcast(mensaje)
 
     # Funcion que comprueba si todas las fichas estan en la meta
     def comprobar_meta(self):
@@ -404,27 +429,48 @@ class Cliente(threading.Thread):
         if self.fichas[ficha] in [5,12,17,22,26,34,39,46,51,56,63,68]:
             return True
         return False
-    
-    # Funcion que comprueba si la ficha esta en casilla de giro
-    def comprobar_giro(self, ficha):
-        casillas_giro = {"Yellow": 68, "Blue": 51, "Green": 17, "Red": 34}
-        giro = casillas_giro[self.color]
-        if self.fichas[ficha] >= giro:
-            return True
-        return False
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
         respuesta = json.dumps(informacion)
         self.connection.sendall(respuesta.encode('utf-8'))
 
+    # Funcion para cerrar la conexion del cliente
+    def cerrar_conexion(self):
+        global hilos_clientes
+        # Se comprueba si el cliente esta en la lista de hilos
+        if self in hilos_clientes:
+            # Se elimina el cliente de la lista de hilos
+            hilos_clientes.remove(self)
+            # Se cierra la conexion del socket
+            self.connection.close()
+            # Se envia el mensaje a todos los clientes
+            mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
+            broadcast(mensaje)
+            # Se imprime el mensaje en el servidor
+            print("Desconexión causada por:", (self.ip, self.puerto))
+            # Se comprueba si la partida esta en curso
+            if estado_partida != "lobby":
+                # Se comprueba si el cliente es el turno actual
+                if self.color == turno_actual:
+                    # Se actualiza el turno
+                    siguiente_turno()
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
+
     # Funcion que se ejecuta cuando se inicia el hilo
     def run(self):
         while True:
-            # Recibe los datos del cliente
-            mensaje = self.connection.recv(1024).decode('utf-8')
-            if mensaje:
-                self.procesar_informacion(mensaje)
+            try:
+                # Recibe los datos del cliente
+                mensaje = self.connection.recv(1024).decode('utf-8')
+                if mensaje:
+                    self.procesar_informacion(mensaje)
+            # Manejar la situación cuando la conexión se cierra abruptamente
+            except ConnectionResetError:
+                self.cerrar_conexion()
+                break
 
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
@@ -471,7 +517,6 @@ def aprobacion_partida():
 
 # Funcion que retorna el o los colores con el valor maximo de la suma de los dados
 def mayor_suma(registro_dados):
-    print(registro_dados)
     mayor_suma = 0
     colores = []
     for color, dados in registro_dados.items():
@@ -531,6 +576,8 @@ def definir_turnos():
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
+        # Se actualiza el turno
+        siguiente_turno()
 
 # Funcion para conectarse al BotAI
 def conexion_bot():
@@ -549,12 +596,12 @@ def recibir_clientes():
         # Espera a que un cliente se conecte
         connection, address = servidor.accept()
         if len(hilos_clientes) < 4 and estado_partida == "lobby":
-                # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
-                print('Conexión establecida por', address)
-                # Crea un hilo para manejar al cliente
-                thread = Cliente(connection, address)
-                hilos_clientes.append(thread)
-                thread.start()
+            # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
+            print("Conexión establecida por:", address)
+            # Crea un hilo para manejar al cliente
+            thread = Cliente(connection, address)
+            hilos_clientes.append(thread)
+            thread.start()
         else:
             # Si hay 4 clientes o ya inicio la partida, se rechaza la conexion
             mensaje = "No se pueden aceptar más clientes"
