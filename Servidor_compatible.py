@@ -23,7 +23,6 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
-import time
 
 # Datos del servidor
 HOST = 'localhost'  # El host del servidor
@@ -114,7 +113,7 @@ class Cliente(threading.Thread):
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
             solicitudes_lobby[solicitud](informacion)
         # Si el estado de la partida es juego o turnos se ejecuta una accion
-        elif solicitud in solicitudes_juego and (estado_partida == "juego" or estado_partida == "turnos"):
+        elif solicitud in solicitudes_juego and (estado_partida == "turnos" or estado_partida == "juego"):
             # Se verifica que sea el turno del jugador
             if self.color == turno_actual:
                 # Se verifica que la solicitud sea la esperada
@@ -269,24 +268,33 @@ class Cliente(threading.Thread):
     def procesar_sacar_ficha(self, informacion):
         # Se importan las variables globales
         global solicitud_esperada
+        global estado_partida
         # Se extrae la informacion de la ficha
         ficha = informacion["ficha"]
         # Se valida que la ficha sea valida
         if ficha in self.fichas:
             # Se actualiza la posicion de la ficha
             self.fichas[ficha] = "Meta"
-            # Se actualiza los turnos
-            self.turnos = 0
-            # Se actualiza el turno
-            siguiente_turno()
-            # Se actualiza la solicitud esperada
-            solicitud_esperada = "lanzar_dados"
-            # Se envia la respuesta al cliente
-            respuesta = {"tipo": "aprobado"}
-            self.enviar_respuesta(respuesta)
-            # Se envia la informacion de la partida actualizada a todos los clientes
-            mensaje = informacion_partida()
-            broadcast(mensaje)
+            # Se comprueba si todas las fichas estan en la meta
+            if self.comprobar_meta():
+                # Se actualiza el estado de la partida
+                estado_partida = "finalizada"
+                # Se envia el mensaje a todos los clientes
+                mensaje = ({"tipo": "finalizar", "ganador": self.color})
+                broadcast(mensaje)
+            else:
+                # Se actualiza los turnos
+                self.turnos = 0
+                # Se actualiza el turno
+                siguiente_turno()
+                # Se actualiza la solicitud esperada
+                solicitud_esperada = "lanzar_dados"
+                # Se envia la respuesta al cliente
+                respuesta = {"tipo": "aprobado"}
+                self.enviar_respuesta(respuesta)
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
         else:
             # Se envia la respuesta al cliente
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
@@ -438,19 +446,20 @@ class Cliente(threading.Thread):
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
         global hilos_clientes
-        # Se comprueba si el cliente esta en la lista de hilos
-        if self in hilos_clientes:
-            # Se elimina el cliente de la lista de hilos
-            hilos_clientes.remove(self)
-            # Se cierra la conexion del socket
-            self.connection.close()
-            # Se envia el mensaje a todos los clientes
-            mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
-            broadcast(mensaje)
-            # Se imprime el mensaje en el servidor
-            print("Desconexión causada por:", (self.ip, self.puerto))
-            # Se comprueba si la partida esta en curso
-            if estado_partida != "lobby":
+        # Se elimina el cliente de la lista de hilos
+        hilos_clientes.remove(self)
+        # Se envia el mensaje a todos los clientes
+        mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
+        broadcast(mensaje)
+        # Se imprime el mensaje en el servidor
+        print("Desconexión causada por:", (self.ip, self.puerto))
+        # Se comprueba si la partida esta en curso
+        if estado_partida == "lobby":
+            colores_disponibles[self.color] = True
+        elif estado_partida == "turnos" or estado_partida == "juego":
+            if len(hilos_clientes) < 2:
+                estado_partida = "finalizada"
+            else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
                     # Se actualiza el turno
@@ -467,9 +476,13 @@ class Cliente(threading.Thread):
                 mensaje = self.connection.recv(1024).decode('utf-8')
                 if mensaje:
                     self.procesar_informacion(mensaje)
-            # Manejar la situación cuando la conexión se cierra abruptamente
-            except ConnectionResetError:
+            # La conexión cuando se cierra abruptamente
+            except:
+                # Se termina la conexion
+                self.connection.close()
+                # Se elimina el jugador
                 self.cerrar_conexion()
+                # Se termina el hilo
                 break
 
 # Funcion para enviar un mensaje a todos los clientes
@@ -574,11 +587,47 @@ def definir_turnos():
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
+        broadcast({"tipo": "empate", "colores": orden_turnos})
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
         # Se actualiza el turno
         siguiente_turno()
 
+# Funcion que actua como receptor de clientes (se ejecuta en un hilo)
+def recibir_clientes():
+    while estado_partida != "finalizado":
+        # Espera a que un cliente se conecte
+        connection, address = servidor.accept()
+        if len(hilos_clientes) < 4 and estado_partida == "lobby":
+            # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
+            print("Conexión establecida por:", address)
+            # Crea un hilo para manejar al cliente
+            thread = Cliente(connection, address)
+            hilos_clientes.append(thread)
+            # Inicia el hilo
+            thread.start()
+        else:
+            # Si hay 4 clientes o ya inicio la partida, se rechaza la conexion
+            mensaje = "No se pueden aceptar más clientes"
+            connection.sendall(mensaje.encode('utf-8'))
+            connection.close()
+    # Se cierran los sockets de los clientes
+    for cliente in hilos_clientes:
+        cliente.connection.close()
+    # Esperar a que los hilos clientes finalicen
+    for thread in hilos_clientes:
+        thread.join()
+    # Se cierra el socket del servidor
+    servidor.close()
+
+# Hilo que actua como receptor de clientes
+thread = threading.Thread(target=recibir_clientes)
+thread.start()
+
+# Esperar a que el hilo del servidor finalice
+thread.join()
+
+'''
 # Funcion para conectarse al BotAI
 def conexion_bot():
     # Se crea el socket para conectarse al BotAI
@@ -588,26 +637,5 @@ def conexion_bot():
     mensaje = {"tipo": "Activar_bot"}
     servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
 
-#conexion_bot()
-
-# Funcion que actua como receptor de clientes (se ejecuta en un hilo)
-def recibir_clientes():
-    while True:
-        # Espera a que un cliente se conecte
-        connection, address = servidor.accept()
-        if len(hilos_clientes) < 4 and estado_partida == "lobby":
-            # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
-            print("Conexión establecida por:", address)
-            # Crea un hilo para manejar al cliente
-            thread = Cliente(connection, address)
-            hilos_clientes.append(thread)
-            thread.start()
-        else:
-            # Si hay 4 clientes o ya inicio la partida, se rechaza la conexion
-            mensaje = "No se pueden aceptar más clientes"
-            connection.sendall(mensaje.encode('utf-8'))
-            connection.close()
-
-# Hilo que actua como receptor de clientes
-thread = threading.Thread(target=recibir_clientes)
-thread.start()
+conexion_bot()
+'''
