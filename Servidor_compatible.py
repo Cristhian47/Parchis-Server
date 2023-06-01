@@ -612,7 +612,7 @@ def recibir_clientes():
 thread = threading.Thread(target=recibir_clientes)
 thread.start()
 
-
+'''
 # Funcion para conectarse al BotAI
 def conexion_bot():
     # Se crea el socket para conectarse al BotAI
@@ -623,6 +623,7 @@ def conexion_bot():
     servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
 
 conexion_bot()
+'''
 
 # Esperar a que el hilo del servidor finalice
 thread.join()
