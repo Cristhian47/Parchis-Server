@@ -16,13 +16,14 @@ RESPUESTAS DE SALIDA
 {"tipo": "sacar_ficha"}
 {"tipo": "sacar_carcel"}
 {"tipo": "mover_ficha"}
-{"tipo": "lanzar_dados"}
 
 BROADCAST DE SALIDA
+{"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
 {"jugador": "Sarah", "color": "Red"}
 {"tipo": "finalizar", "ganador": "Red"}
 {"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
-{"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
+{"tipo": "ganador_turno", "color": Blue}
+{"tipo": "empate_turno", "colores": [Blue,Red,...]}
 '''
 
 # Librerias
