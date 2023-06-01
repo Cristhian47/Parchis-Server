@@ -451,7 +451,7 @@ class Cliente(threading.Thread):
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
-        global hilos_clientes
+        global hilos_clientes, estado_partida
         # Se elimina el cliente de la lista de hilos
         hilos_clientes.remove(self)
         # Se envia el mensaje a todos los clientes
