@@ -470,6 +470,13 @@ class Cliente(threading.Thread):
                 mensaje = self.connection.recv(1024).decode('utf-8')
                 if mensaje:
                     self.procesar_informacion(mensaje)
+                else:
+                    # Se termina la conexion
+                    self.connection.close()
+                    # Se elimina el jugador
+                    self.cerrar_conexion()
+                    # Se termina el hilo
+                    break
             # La conexión cuando se cierra abruptamente
             except:
                 # Se termina la conexion
@@ -595,7 +602,7 @@ def definir_turnos():
 # Funcion que actua como receptor de clientes (se ejecuta en un hilo)
 def servidor():
     # Datos del servidor
-    HOST = 'localhost'  # El host del servidor
+    HOST = "localhost"  # El host del servidor
     PORT = 8001         # El puerto del servidor
 
     # Conectarse al servidor
@@ -669,7 +676,7 @@ thread.start()
 def conexion_bot():
     # Se crea el socket para conectarse al BotAI
     servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_bot.connect(("localhost", 8002))
+    servidor_bot.connect(("10.253.61.122", 8002))
     # Se envia el mensaje al BotAI
     mensaje = {"tipo": "Activar_bot"}
     servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
