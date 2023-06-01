@@ -6,17 +6,22 @@ SOLICITUDES DE ENTRADA
 {"tipo": "seleccion_color", "nombre": "Sarah", "color": "Red"}
 {"tipo": "solicitud_iniciar_partida"}
 {"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
-{"tipo: "sacar_ficha", "ficha": "F1"}
-{"tipo: "mover_ficha", ...}
+{"tipo": "sacar_ficha", "ficha": "F1"}
+{"tipo": "sacar_carcel", "ficha": "F1"}
+{"tipo": "mover_ficha", "ficha": "F1"}
 
 RESPUESTAS DE SALIDA
-{"tipo": "aprobado"}
 {"tipo": "denegado", "razon": "mensaje"}
 {"tipo": "iniciar_partida"}
 {"tipo": "sacar_ficha"}
+{"tipo": "sacar_carcel"}
+{"tipo": "mover_ficha"}
+{"tipo": "lanzar_dados"}
 
 BROADCAST DE SALIDA
 {"jugador": "Sarah", "color": "Red"}
+{"tipo": "finalizar", "ganador": "Red"}
+{"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
 {"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
 '''
 
@@ -446,7 +451,7 @@ class Cliente(threading.Thread):
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
-        global hilos_clientes
+        global hilos_clientes, estado_partida
         # Se elimina el cliente de la lista de hilos
         hilos_clientes.remove(self)
         # Se envia el mensaje a todos los clientes
