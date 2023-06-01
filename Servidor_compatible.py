@@ -238,6 +238,10 @@ class Cliente(threading.Thread):
                         respuesta = {"tipo": "mover_ficha"}
                         self.enviar_respuesta(respuesta)
 
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
+
     # El cliente saca una ficha del tablero {"tipo": "sacar_ficha", "ficha": "F1"}
     def procesar_sacar_ficha(self, informacion):
         # Variables globales
@@ -440,6 +444,9 @@ class Cliente(threading.Thread):
                 if len(registro_dados) == len(orden_turnos) - 1:
                     # Se elimina de la lista de turnos
                     orden_turnos.remove(self.color)
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
                     # Se definen los turnos segun quien saco el mayor valor
                     definir_turnos()
                 else:
@@ -447,6 +454,9 @@ class Cliente(threading.Thread):
                     siguiente_turno()
                     # Se elimina de la lista de turnos
                     orden_turnos.remove(self.color)
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
 
         elif estado_partida == "juego":
             if len(hilos_clientes) < 2:
