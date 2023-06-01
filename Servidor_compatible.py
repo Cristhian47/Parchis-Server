@@ -25,30 +25,10 @@ BROADCAST DE SALIDA
 {"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
 '''
 
+# Librerias
 import socket
 import threading
 import json
-
-# Datos del servidor
-HOST = 'localhost'  # El host del servidor
-PORT = 8001        # El puerto del servidor
-
-# Conectarse al servidor
-servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind((HOST, PORT))
-servidor.listen(10)
-print(f"Servidor esperando conexiones en {HOST}:{PORT}...")
-
-# Variables globales
-hilos_clientes = [] # Hilos de los clientes
-colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
-turno_actual = None # Color del jugador con el turno actual
-orden_turnos = [] # Orden de los turnos en la partida
-estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego, finalizada)
-solicitud_esperada = None # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
-ultimos_dados = {"D1" : None, "D2" : None} # Valor de los dados de la ultima jugada (1-6)
-registro_dados = {} # Registro de los dados lanzados en una ronda
-pares_seguidos = 0 # Contador de los pares seguidos por un jugador
 
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
@@ -154,10 +134,7 @@ class Cliente(threading.Thread):
             broadcast(mensaje)
 
     # El cliente quiere iniciar la partida {"tipo": "solicitud_iniciar_partida"}
-    def procesar_solicitud_iniciar_partida(self, informacion):
-        # Variables globales
-        global estado_partida, solicitud_esperada
-        
+    def procesar_solicitud_iniciar_partida(self, informacion):     
         # Se valida que el cliente haya seleccionado un color
         respuesta = None
         if self.nombre == None or self.color == None:
@@ -169,22 +146,8 @@ class Cliente(threading.Thread):
         else:
             # Se marca al cliente como listo para iniciar la partida
             self.iniciar_partida = True
-            # Se valida si hay minimo 2 clientes conectados
-            if len(hilos_clientes) >= 2:
-                # Se valida si todos los clientes estan listos para iniciar la partida
-                aprobaciones = 0
-                for cliente in hilos_clientes:
-                    if cliente.iniciar_partida == True:
-                        aprobaciones += 1
-                # Se inicia la partida si todos los clientes estan listos
-                if aprobaciones == len(hilos_clientes):
-                    estado_partida = "turnos"
-                    solicitud_esperada = "lanzar_dados"
-                    # Se ordenan los turnos segun el orden de los colores
-                    ordenar_turnos(hilos_clientes[0].color)
-                    # Se envia el mensaje de partida iniciada a todos los clientes
-                    mensaje = {"tipo": "iniciar_partida"}
-                    broadcast(mensaje)
+            # Se comprueba si se puede iniciar la partida
+            iniciar_partida()
 
     # El cliente lanza los dados {"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
     def procesar_lanzar_dados(self, informacion):
@@ -301,9 +264,6 @@ class Cliente(threading.Thread):
                 siguiente_turno()
                 # Se actualiza la solicitud esperada
                 solicitud_esperada = "lanzar_dados"
-                # Se envia la respuesta al cliente
-                respuesta = {"tipo": "lanzar_dados"}
-                self.enviar_respuesta(respuesta)
                 # Se envia la informacion de la partida actualizada a todos los clientes
                 mensaje = informacion_partida()
                 broadcast(mensaje)
@@ -337,9 +297,6 @@ class Cliente(threading.Thread):
                 self.turnos -= 1
             # Se actualiza la solicitud esperada
             solicitud_esperada = "lanzar_dados"
-            # Se envia la respuesta al cliente
-            respuesta = {"tipo": "lanzar_dados"}
-            self.enviar_respuesta(respuesta)
             # Se envia la informacion de la partida actualizada a todos los clientes
             mensaje = informacion_partida()
             broadcast(mensaje)
@@ -371,11 +328,13 @@ class Cliente(threading.Thread):
             if nuevo_contador == 71:
                 # Llegó a la meta
                 nueva_posicion = "Meta"
+
             # Está en la escalera
             elif  63 < nuevo_contador < 71:
                 # Se calcula la nueva posicion
                 nueva_posicion = 69 + (nuevo_contador - 63)
-            # No está en la escalera
+
+            # Está en el tablero
             elif nuevo_contador <= 63:      
                 # Se comprueba si la ficha excede el limite del mapa
                 if nueva_posicion > 68:
@@ -410,9 +369,6 @@ class Cliente(threading.Thread):
                     self.turnos -= 1
                 # Se actualiza la solicitud esperada
                 solicitud_esperada = "lanzar_dados"
-                # Se envia la respuesta al cliente
-                respuesta = {"tipo": "lanzar_dados"}
-                self.enviar_respuesta(respuesta)
                 # Se envia la informacion de la partida actualizada a todos los clientes
                 mensaje = informacion_partida()
                 broadcast(mensaje)
@@ -451,28 +407,60 @@ class Cliente(threading.Thread):
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
-        global hilos_clientes, estado_partida
+        # Variables globales
+        global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada
+
+        # Se imprime el mensaje en el servidor
+        print("Desconexión causada por:", (self.ip, self.puerto))
+
         # Se elimina el cliente de la lista de hilos
         hilos_clientes.remove(self)
+
         # Se envia el mensaje a todos los clientes
         mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
         broadcast(mensaje)
-        # Se imprime el mensaje en el servidor
-        print("Desconexión causada por:", (self.ip, self.puerto))
-        # Se comprueba si la partida esta en curso
+
         if estado_partida == "lobby":
-            colores_disponibles[self.color] = True
-        elif estado_partida == "turnos" or estado_partida == "juego":
+            # El color del cliente se vuelve a poner disponible
+            if self.color in ["Yellow", "Blue", "Green", "Red"]:
+                colores_disponibles[self.color] = True
+            # Se comprueba si se puede iniciar la partida
+            iniciar_partida()
+            
+        elif estado_partida == "turnos":
+            # Se comprueba si el cliente es el turno actual
+            if self.color == turno_actual:
+                if len(registro_dados) == len(orden_turnos) - 1:
+                    # Se elimina de la lista de turnos
+                    orden_turnos.remove(self.color)
+                    # Se definen los turnos segun quien saco el mayor valor
+                    definir_turnos()
+                else:
+                    # Se actualiza el turno
+                    siguiente_turno()
+                    # Se elimina de la lista de turnos
+                    orden_turnos.remove(self.color)
+
+        elif estado_partida == "juego":
             if len(hilos_clientes) < 2:
+                # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
+                # Se envia el mensaje a todos los clientes
+                ganador = hilos_clientes[0].color
+                mensaje = ({"tipo": "finalizar", "ganador": ganador})
+                broadcast(mensaje)
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
                     # Se actualiza el turno
                     siguiente_turno()
-                # Se envia la informacion de la partida actualizada a todos los clientes
-                mensaje = informacion_partida()
-                broadcast(mensaje)
+                    # Se actualiza la solicitud esperada
+                    solicitud_esperada = "lanzar_dados"
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
+                # Se elimina de la lista de turnos
+                orden_turnos.remove(self.color)
 
     # Funcion que se ejecuta cuando se inicia el hilo
     def run(self):
@@ -495,6 +483,29 @@ class Cliente(threading.Thread):
 def broadcast(mensaje):
     for client in hilos_clientes:
         client.enviar_respuesta(mensaje)
+
+# Funcion que comprueba si se puede iniciar la partida
+def iniciar_partida():
+    # Se importan las variables globales
+    global estado_partida
+    global solicitud_esperada
+    # Se valida si hay minimo 2 clientes conectados
+    if len(hilos_clientes) >= 2:
+        # Se valida si todos los clientes quieren iniciar la partida
+        aprobaciones = 0
+        for cliente in hilos_clientes:
+            if cliente.iniciar_partida == True:
+                aprobaciones += 1
+        if aprobaciones == len(hilos_clientes):
+            estado_partida = "turnos"
+            solicitud_esperada = "lanzar_dados"
+            # Se selecciona el primer turno
+            primer_turno = hilos_clientes[0].color
+            # Se ordenan los turnos segun el orden de los colores
+            ordenar_turnos(primer_turno)
+            # Se envia el mensaje de partida iniciada a todos los clientes
+            mensaje = {"tipo": "iniciar_partida"}
+            broadcast(mensaje)
 
 # Funcion que retorna la informacion de la partida
 def informacion_partida():
@@ -582,38 +593,79 @@ def definir_turnos():
         siguiente_turno()
 
 # Funcion que actua como receptor de clientes (se ejecuta en un hilo)
-def recibir_clientes():
-    while estado_partida != "finalizado":
-        # Espera a que un cliente se conecte
-        connection, address = servidor.accept()
-        if len(hilos_clientes) < 4 and estado_partida == "lobby":
-            # Si hay menos de 4 clientes y no ha iniciado la partida, se acepta la conexion
-            print("Conexión establecida por:", address)
-            # Crea un hilo para manejar al cliente
-            thread = Cliente(connection, address)
-            hilos_clientes.append(thread)
-            # Inicia el hilo
-            thread.start()
-        else:
-            # Si hay 4 clientes o ya inicio la partida, se rechaza la conexion
-            mensaje = "No se pueden aceptar más clientes"
-            connection.sendall(mensaje.encode('utf-8'))
-            connection.close()
-    # Se cierran los sockets de los clientes
-    for cliente in hilos_clientes:
-        cliente.connection.close()
-    # Esperar a que los hilos clientes finalicen
-    for thread in hilos_clientes:
-        thread.join()
+def servidor():
+    # Datos del servidor
+    HOST = 'localhost'  # El host del servidor
+    PORT = 8001         # El puerto del servidor
+
+    # Conectarse al servidor
+    servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    servidor.bind((HOST, PORT))
+    servidor.listen(10)
+    print(f"Servidor esperando conexiones en {HOST}:{PORT}...")
+
+    # Se importan las variables globales
+    global hilos_clientes, colores_disponibles, turno_actual, orden_turnos, estado_partida, solicitud_esperada, ultimos_dados, registro_dados, pares_seguidos
+
+    # Ciclo infinito para mantener el servidor activo
+    while True:
+        # Se inicializan las variables globales para el proximo juego
+        hilos_clientes = [] # Hilos de los clientes
+        colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
+        turno_actual = None # Color del jugador con el turno actual
+        orden_turnos = [] # Orden de los turnos en la partida
+        estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego, finalizada)
+        solicitud_esperada = None # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
+        ultimos_dados = {"D1" : None, "D2" : None} # Valor de los dados de la ultima jugada (1-6)
+        registro_dados = {} # Registro de los dados lanzados en una ronda
+        pares_seguidos = 0 # Contador de los pares seguidos por un jugador
+
+        # Ciclo para recibir clientes
+        while estado_partida != "finalizado":
+            # Espera a que un cliente se conecte
+            connection, address = servidor.accept()
+
+            # Se valida la solicitud
+            respuesta = None
+            if estado_partida != "lobby":
+                respuesta = "Rechazado: La partida ya inició."
+            elif not (len(hilos_clientes) < 4):
+                respuesta = "Rechazado: Ya se superó el número máximo de jugadores."
+
+            # Se rechaza o se ejecuta la solicitud
+            if respuesta:
+                print(f"Conexión rechazada por: {address}, razón: {respuesta}")
+                connection.sendall(respuesta.encode('utf-8'))
+                connection.close()
+            else:
+                # Se acepta la conexion
+                print("Conexión establecida por:", address)
+                # Crea un hilo para manejar al cliente
+                thread = Cliente(connection, address)
+                # Agrega el hilo a la lista de hilos
+                hilos_clientes.append(thread)
+                # Inicia el hilo
+                thread.start()
+
+        # Se cierran los sockets de los clientes
+        for cliente in hilos_clientes:
+            cliente.connection.close()
+
+        # Esperar a que los hilos clientes finalicen
+        for thread in hilos_clientes:
+            thread.join()
+
     # Se cierra el socket del servidor
-    servidor.close()
+    # servidor.close()
 
 # Hilo que actua como receptor de clientes
-thread = threading.Thread(target=recibir_clientes)
+thread = threading.Thread(target=servidor)
+
+# Iniciar el hilo del servidor
 thread.start()
 
 # Esperar a que el hilo del servidor finalice
-thread.join()
+# thread.join()
 
 '''
 # Funcion para conectarse al BotAI
