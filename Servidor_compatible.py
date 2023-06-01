@@ -175,11 +175,17 @@ class Cliente(threading.Thread):
                 registro_dados[self.color] = informacion["dados"]
                 # Se valida que todos los jugadores hayan lanzado los dados
                 if len(registro_dados) == len(orden_turnos):
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
                     # Se definen los turnos segun quien saco el mayor valor
                     definir_turnos()
                 else:
                     # Se actualiza el turno
                     siguiente_turno()
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
 
             # El estado de la partida es en juego
             elif estado_partida == "juego":
@@ -288,7 +294,7 @@ class Cliente(threading.Thread):
             self.enviar_respuesta(respuesta)
         else:
             # Se actualiza la posicion de la ficha
-            casillas_salida = {"Yellow": 5, "Blue": 22, "Green": 39, "Red": 56}
+            casillas_salida = {"Yellow": 56, "Blue": 5, "Green": 22, "Red": 39}
             self.fichas[ficha] = casillas_salida[self.color]
             # Se actualiza los turnos
             if self.turnos == 0:
@@ -588,12 +594,12 @@ def definir_turnos():
     if len(primer_lugar) == 1:
         ordenar_turnos(primer_lugar[0])
         estado_partida = "juego"
-        broadcast({"tipo": "ganador", "color": primer_lugar[0]})
+        broadcast({"tipo": "ganador_turno", "color": primer_lugar[0]})
     # Si hay un empate con el valor maximo, se debe hacer un desempate
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
-        broadcast({"tipo": "empate", "colores": orden_turnos})
+        broadcast({"tipo": "empate_turno", "colores": orden_turnos})
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
         # Se actualiza el turno
