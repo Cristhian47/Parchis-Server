@@ -676,7 +676,7 @@ thread.start()
 def conexion_bot():
     # Se crea el socket para conectarse al BotAI
     servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_bot.connect(("10.253.61.122", 8002))
+    servidor_bot.connect(("localhost", 8002))
     # Se envia el mensaje al BotAI
     mensaje = {"tipo": "Activar_bot"}
     servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
