@@ -196,7 +196,7 @@ class Cliente(threading.Thread):
                 # Se comprueba si saco pares
                 if ultimos_dados["D1"] == ultimos_dados["D2"]:
                     # Si saca par tiene derecho a otro turno
-                    self.turnos == 1
+                    self.turnos = 1
                     # Se incrementa el contador de pares seguidos
                     pares_seguidos += 1
                     # Si saca 3 pares seguidos saca ficha
