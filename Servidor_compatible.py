@@ -508,7 +508,8 @@ class Cliente(threading.Thread):
                     # Se elimina de la lista de turnos
                     orden_turnos.remove(self.color)
                     # Se elimina del diccinario de registro de dados
-                    del registro_dados[self.color]
+                    if self.color in registro_dados:
+                        del registro_dados[self.color]
                     # Se envia la informacion de la partida actualizada a todos los clientes
                     mensaje = informacion_partida()
                     broadcast(mensaje)
