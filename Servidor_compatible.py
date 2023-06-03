@@ -250,8 +250,15 @@ class Cliente(threading.Thread):
                         # Se actualiza los turnos
                         if self.turnos == 0:
                             siguiente_turno()
+                            # Se envia la informacion de la partida actualizada a todos los clientes
+                            mensaje = informacion_partida()
+                            broadcast(mensaje)
                         else:
                             self.turnos -= 1
+                            # Se envia la informacion de la partida actualizada a todos los clientes
+                            mensaje = informacion_partida()
+                            broadcast(mensaje)
+
                     else:
                         # Se actualiza la solicitud esperada
                         solicitud_esperada = "mover_ficha"
@@ -494,6 +501,14 @@ class Cliente(threading.Thread):
                         # Se envia la informacion de la partida actualizada a todos los clientes
                         mensaje = informacion_partida()
                         broadcast(mensaje)
+                else: 
+                    # Se elimina de la lista de turnos
+                    orden_turnos.remove(self.color)
+                    # Se elimina del diccinario de registro de dados
+                    del registro_dados[self.color]
+                    # Se envia la informacion de la partida actualizada a todos los clientes
+                    mensaje = informacion_partida()
+                    broadcast(mensaje)
 
         elif estado_partida == "juego":
             if len(hilos_clientes) < 2:
@@ -580,7 +595,6 @@ def informacion_partida():
     # Se agrega la informacion de cada cliente
     jugadores = []
     for cliente in hilos_clientes:
-        # if cliente.nombre != None and cliente.color != None:
         informacion_cliente = {
                 "nombre": cliente.nombre,
                 "color": cliente.color,
@@ -669,6 +683,7 @@ def reiniciar_partida():
     # Se importan las variables globales
     global hilos_clientes, colores_disponibles, turno_actual, orden_turnos, estado_partida, solicitud_esperada, ultimos_dados, registro_dados, pares_seguidos
 
+    # Se imprime el mensaje en el servidor
     print("Desconectando clientes: ", hilos_clientes)
 
     # Se cierran los sockets de los clientes
