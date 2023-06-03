@@ -574,7 +574,7 @@ def informacion_partida():
     for cliente in hilos_clientes:
         if cliente.nombre != None and cliente.color != None:
             informacion_cliente = {
-                cliente.nombre : {
+                cliente.color : {
                         "nombre": cliente.nombre,
                         "color": cliente.color,
                         "fichas": cliente.fichas,
