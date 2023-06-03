@@ -472,6 +472,9 @@ class Cliente(threading.Thread):
             # El color del cliente se vuelve a poner disponible
             if self.color in ["Yellow", "Blue", "Green", "Red"]:
                 colores_disponibles[self.color] = True
+            # Se envia la informacion de la partida actualizada a todos los clientes
+            mensaje = informacion_partida()
+            broadcast(mensaje)
             # Se comprueba si se puede iniciar la partida
             iniciar_partida()
             
