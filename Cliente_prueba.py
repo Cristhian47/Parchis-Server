@@ -3,7 +3,7 @@ import socket
 import threading
 import json
 
-HOST = "localhost"  # El host del servidor
+HOST = "192.168.0.15"  # El host del servidor
 PORT = 8001        # El puerto del servidor
 
 # Conectarse al servidor

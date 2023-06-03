@@ -1,12 +1,16 @@
-game = {
+{
     "turno_actual" : "Red",
+
+    "solicitud_esperada" : "lanzar_dados",
+
+    "estado_partida" : "lobby",
 
     "ultimos_dados" : {
         "D1":5,
         "D2":1
         },
 
-    "nombre" : {
+    "Red" : {
         "nombre":"Juan",
         "color":"Red",
         "fichas": {
@@ -21,5 +25,9 @@ game = {
             "F3": 0,
             "F4": 0
             }
-        }
+        },
+    
+    "Blue" : ...
 }
+
+

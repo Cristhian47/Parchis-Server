@@ -12,18 +12,37 @@ SOLICITUDES DE ENTRADA
 
 RESPUESTAS DE SALIDA
 {"tipo": "denegado", "razon": "mensaje"}
-{"tipo": "iniciar_partida"}
-{"tipo": "sacar_ficha"}
-{"tipo": "sacar_carcel"}
-{"tipo": "mover_ficha"}
 
 BROADCAST DE SALIDA
-{"turno_actual": "red", "ultimos_dados": {"D1" : 5, "D2" : 2}, ...}
-{"jugador": "Sarah", "color": "Red"}
-{"tipo": "finalizar", "ganador": "Red"}
+{"tipo": "conexion", "cliente": (self.ip, self.puerto)}
 {"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
-{"tipo": "ganador_turno", "color": Blue}
-{"tipo": "empate_turno", "colores": [Blue,Red,...]}
+{"tipo": "finalizar", "ganador": "Red"}
+{   
+    "turno_actual" : "Red",
+    "solicitud_esperada" : "lanzar_dados",
+    "estado_partida" : "lobby",
+    "ultimos_dados" : {
+        "D1":5,
+        "D2":1
+        },
+    "Red" : {
+        "nombre":"Juan",
+        "color":"Red",
+        "fichas": {
+            "F1": "Carcel",
+            "F2": "Carcel",
+            "F3": "Carcel",
+            "F4": "Carcel"
+            },
+        "contadores_fichas": {
+            "F1": 0,
+            "F2": 0,
+            "F3": 0,
+            "F4": 0
+            }
+        },
+    "Blue" : ...
+}
 '''
 
 # Librerias
@@ -130,8 +149,10 @@ class Cliente(threading.Thread):
             colores_disponibles[color] = False
             self.nombre = nombre
             self.color = color
-            # Se envia el mensaje de seleccion de color a todos los clientes
-            mensaje = {"jugador": self.nombre, "color": self.color}
+            # Se imprime la informacion del cliente
+            print("Seleccion de color: ", (nombre, color))
+            # Se envia la informacion de la partida actualizada a todos los clientes
+            mensaje = informacion_partida()
             broadcast(mensaje)
 
     # El cliente quiere iniciar la partida {"tipo": "solicitud_iniciar_partida"}
@@ -147,6 +168,8 @@ class Cliente(threading.Thread):
         else:
             # Se marca al cliente como listo para iniciar la partida
             self.iniciar_partida = True
+            # Se imprime la informacion del cliente
+            print("Solicitud de iniciar partida: ", (self.nombre, self.color))
             # Se comprueba si se puede iniciar la partida
             iniciar_partida()
 
@@ -176,9 +199,6 @@ class Cliente(threading.Thread):
                 registro_dados[self.color] = informacion["dados"]
                 # Se valida que todos los jugadores hayan lanzado los dados
                 if len(registro_dados) == len(orden_turnos):
-                    # Se envia la informacion de la partida actualizada a todos los clientes
-                    mensaje = informacion_partida()
-                    broadcast(mensaje)
                     # Se definen los turnos segun quien saco el mayor valor
                     definir_turnos()
                 else:
@@ -205,21 +225,21 @@ class Cliente(threading.Thread):
                         pares_seguidos = 0
                         # Se actualiza la solicitud esperada
                         solicitud_esperada = "sacar_ficha"
-                        # Se envia la respuesta al cliente
-                        respuesta = {"tipo": "sacar_ficha"}
-                        self.enviar_respuesta(respuesta)
+                        # Se envia la informacion de la partida actualizada a todos los clientes
+                        mensaje = informacion_partida()
+                        broadcast(mensaje)
                     elif self.fichas_carcel():
                         # Se actualiza la solicitud esperada
                         solicitud_esperada = "sacar_carcel"
-                        # Se envia la respuesta al cliente
-                        respuesta = {"tipo": "sacar_carcel"}
-                        self.enviar_respuesta(respuesta)
+                        # Se envia la informacion de la partida actualizada a todos los clientes
+                        mensaje = informacion_partida()
+                        broadcast(mensaje)
                     else:
                         # Se actualiza la solicitud esperada
                         solicitud_esperada = "mover_ficha"
-                        # Se envia la respuesta al cliente
-                        respuesta = {"tipo": "mover_ficha"}
-                        self.enviar_respuesta(respuesta)
+                        # Se envia la informacion de la partida actualizada a todos los clientes
+                        mensaje = informacion_partida()
+                        broadcast(mensaje)
 
                 # No saca par
                 else:
@@ -234,13 +254,9 @@ class Cliente(threading.Thread):
                     else:
                         # Se actualiza la solicitud esperada
                         solicitud_esperada = "mover_ficha"
-                        # Se envia la respuesta al cliente
-                        respuesta = {"tipo": "mover_ficha"}
-                        self.enviar_respuesta(respuesta)
-
-                # Se envia la informacion de la partida actualizada a todos los clientes
-                mensaje = informacion_partida()
-                broadcast(mensaje)
+                        # Se envia la informacion de la partida actualizada a todos los clientes
+                        mensaje = informacion_partida()
+                        broadcast(mensaje)
 
     # El cliente saca una ficha del tablero {"tipo": "sacar_ficha", "ficha": "F1"}
     def procesar_sacar_ficha(self, informacion):
@@ -461,9 +477,6 @@ class Cliente(threading.Thread):
                     if len(registro_dados) == len(orden_turnos) - 1:
                         # Se elimina de la lista de turnos
                         orden_turnos.remove(self.color)
-                        # Se envia la informacion de la partida actualizada a todos los clientes
-                        mensaje = informacion_partida()
-                        broadcast(mensaje)
                         # Se definen los turnos segun quien saco el mayor valor
                         definir_turnos()
                     else:
@@ -542,8 +555,8 @@ def iniciar_partida():
             primer_turno = hilos_clientes[0].color
             # Se ordenan los turnos segun el orden de los colores
             ordenar_turnos(primer_turno)
-            # Se envia el mensaje de partida iniciada a todos los clientes
-            mensaje = {"tipo": "iniciar_partida"}
+            # Se envia la informacion de la partida actualizada a todos los clientes
+            mensaje = informacion_partida()
             broadcast(mensaje)
             # Se imprime el mensaje en el servidor
             print("Partida iniciada")
@@ -554,18 +567,21 @@ def informacion_partida():
     partida = {
         "turno_actual" : turno_actual,
         "ultimos_dados" : ultimos_dados,
+        "solicitud_esperada" : solicitud_esperada,
+        "estado_partida" : estado_partida
     }
     # Se agrega la informacion de cada cliente
     for cliente in hilos_clientes:
-        informacion_cliente = {
-            cliente.nombre : {
-                    "nombre": cliente.nombre,
-                    "color": cliente.color,
-                    "fichas": cliente.fichas,
-                    "contadores_fichas": cliente.contadores_fichas,
+        if cliente.nombre != None and cliente.color != None:
+            informacion_cliente = {
+                cliente.nombre : {
+                        "nombre": cliente.nombre,
+                        "color": cliente.color,
+                        "fichas": cliente.fichas,
+                        "contadores_fichas": cliente.contadores_fichas,
+                    }
                 }
-            }
-        partida.update(informacion_cliente)
+            partida.update(informacion_cliente)
     return partida
 
 # Funcion que retorna el o los colores con el valor maximo de la suma de los dados
@@ -622,16 +638,20 @@ def definir_turnos():
     if len(primer_lugar) == 1:
         ordenar_turnos(primer_lugar[0])
         estado_partida = "juego"
-        broadcast({"tipo": "ganador_turno", "color": primer_lugar[0]})
+        # Se envia la informacion de la partida actualizada a todos los clientes
+        mensaje = informacion_partida()
+        broadcast(mensaje)
         # Se imprime el mensaje en el servidor
-        print("Turnos definidos")
+        print("Turnos definidos: ", primer_lugar[0])
     # Si hay un empate con el valor maximo, se debe hacer un desempate
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
-        broadcast({"tipo": "empate_turno", "colores": orden_turnos})
+        # Se envia la informacion de la partida actualizada a todos los clientes
+        mensaje = informacion_partida()
+        broadcast(mensaje)
         # Se imprime el mensaje en el servidor
-        print("Empate de turnos")
+        print("Empate de turnos: ", orden_turnos)
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
         # Se actualiza el turno
@@ -687,6 +707,9 @@ def recibir_clientes():
         else:
             # Se imprime el mensaje en el servidor
             print("Conexión establecida por:", address)
+            # Se envia el mensaje a todos los clientes
+            mensaje = ({"tipo": "conexion", "cliente": address})
+            broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
             # Agrega el hilo a la lista de hilos
@@ -695,7 +718,7 @@ def recibir_clientes():
             thread.start()
 
 # Datos del servidor
-HOST = "localhost"  # El host del servidor
+HOST = "192.168.0.15"  # El host del servidor
 PORT = 8001         # El puerto del servidor
 
 # Conectarse al servidor
