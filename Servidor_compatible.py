@@ -746,15 +746,6 @@ thread = threading.Thread(target=recibir_clientes)
 # Iniciar el hilo receptor de clientes
 thread.start()
 
-# Esperar a que el hilo receptor de clientes finalice
-thread.join()
-
-# Se cierra el socket del servidor
-servidor.close()
-
-# Se imprime el mensaje en el servidor
-print("Servidor finalizado")
-
 '''
 # Funcion para conectarse al BotAI
 def conexion_bot():
@@ -767,3 +758,13 @@ def conexion_bot():
 
 conexion_bot()
 '''
+
+# Esperar a que el hilo receptor de clientes finalice
+thread.join()
+
+# Se cierra el socket del servidor
+servidor.close()
+
+# Se imprime el mensaje en el servidor
+print("Servidor finalizado")
+
