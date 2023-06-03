@@ -24,24 +24,25 @@ BROADCAST DE SALIDA
     "ultimos_dados" : {
         "D1":5,
         "D2":1
-        },
-    "Red" : {
-        "nombre":"Juan",
-        "color":"Red",
-        "fichas": {
-            "F1": "Carcel",
-            "F2": "Carcel",
-            "F3": "Carcel",
-            "F4": "Carcel"
+    },
+    "jugadores" : [
+        {
+            "nombre":"Juan",
+            "color":"Red",
+            "fichas": {
+                "F1": "Carcel",
+                "F2": "Carcel",
+                "F3": "Carcel",
+                "F4": "Carcel"
             },
-        "contadores_fichas": {
-            "F1": 0,
-            "F2": 0,
-            "F3": 0,
-            "F4": 0
+            "contadores_fichas": {
+                "F1": 0,
+                "F2": 0,
+                "F3": 0,
+                "F4": 0
             }
-        },
-    "Blue" : ...
+        }
+    ]
 }
 '''
 
@@ -61,8 +62,8 @@ class Cliente(threading.Thread):
         self.iniciar_partida = False
         self.turnos = 2
         # Atributos del jugador
-        self.nombre = None
-        self.color = None
+        self.nombre = ""
+        self.color = ""
         self.fichas = {
             "F1": "Carcel",
             "F2": "Carcel",
@@ -133,9 +134,9 @@ class Cliente(threading.Thread):
         
         # Se valida la congruencia de los argumentos
         respuesta = None
-        if self.nombre != None and self.color != None:
+        if self.nombre != "" and self.color != "":
             respuesta = {"tipo": "denegado", "razon": "ya seleccionaste un color"}
-        elif nombre == None or color == None:
+        elif nombre == "" or color == "" or nombre == None or color == None:
             respuesta = {"tipo": "denegado", "razon": "no seleccionaste un color"}   
         elif color not in ["Yellow", "Blue", "Green", "Red"]:
             respuesta = {"tipo": "denegado", "razon": "color no valido"}
@@ -159,7 +160,7 @@ class Cliente(threading.Thread):
     def procesar_solicitud_iniciar_partida(self, informacion):     
         # Se valida que el cliente haya seleccionado un color
         respuesta = None
-        if self.nombre == None or self.color == None:
+        if self.nombre == "" or self.color == "":
             respuesta = {"tipo": "denegado", "razon": "no seleccionaste un color"}
 
         # Se rechaza o se ejecuta la solicitud
@@ -270,6 +271,8 @@ class Cliente(threading.Thread):
         respuesta = None
         if ficha not in self.fichas:
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
+        elif self.fichas[ficha] == "Meta":
+            respuesta = {"tipo": "denegado", "razon": "ficha en meta"}
         
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
@@ -277,6 +280,8 @@ class Cliente(threading.Thread):
         else:
             # Se actualiza la posicion de la ficha
             self.fichas[ficha] = "Meta"
+            # Se actualiza la posicion de la posicion
+            self.contadores_fichas[ficha] = 71
             # Se comprueba si todas las fichas estan en la meta
             if self.comprobar_meta():
                 # Se actualiza el estado de la partida
@@ -344,6 +349,8 @@ class Cliente(threading.Thread):
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
         elif self.fichas[ficha] == "Carcel":
             respuesta = {"tipo": "denegado", "razon": "la ficha esta en la carcel"}
+        elif self.fichas[ficha] == "Meta":
+            respuesta = {"tipo": "denegado", "razon": "la ficha esta en la meta"}
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
@@ -353,8 +360,8 @@ class Cliente(threading.Thread):
             nueva_posicion = self.fichas[ficha] + dados_suma
             nuevo_contador = self.contadores_fichas[ficha] + dados_suma
 
-            # Llegó a la meta sin excederse
-            if nuevo_contador == 71:
+            # Llegó a la meta (aunque se exceda)
+            if nuevo_contador >= 71: # and nueva_posicion >= 77:
                 # Llegó a la meta
                 nueva_posicion = "Meta"
 
@@ -370,13 +377,13 @@ class Cliente(threading.Thread):
                     # Se calcula la nueva posicion
                     nueva_posicion = nueva_posicion - 68
                 # Se comprueba si la ficha puede comer a otras
-                if not self.comprobar_seguro(ficha):
+                if not self.comprobar_seguro(nueva_posicion):
                     for cliente in hilos_clientes:
                         if cliente.color != self.color:
-                            for ficha, posicion in cliente.fichas.items():
-                                if posicion == nueva_posicion:
-                                    cliente.fichas[ficha] = "Carcel"
-                                    cliente.contadores_fichas[ficha] = 0
+                            for ficha_oponente, posicion_oponente in cliente.fichas.items():
+                                if posicion_oponente == nueva_posicion:
+                                    cliente.fichas[ficha_oponente] = "Carcel"
+                                    cliente.contadores_fichas[ficha_oponente] = 0
 
             # Se actualiza la posicion de la ficha
             self.fichas[ficha] = nueva_posicion
@@ -426,8 +433,8 @@ class Cliente(threading.Thread):
         return False
 
     # Funcion que comprueba si la ficha esta en casilla de seguro
-    def comprobar_seguro(self, ficha):
-        if self.fichas[ficha] in [5,12,17,22,26,34,39,46,51,56,63,68]:
+    def comprobar_seguro(self, nueva_posicion):
+        if nueva_posicion in [5,12,17,22,26,34,39,46,51,56,63,68]:
             return True
         return False
 
@@ -566,22 +573,22 @@ def informacion_partida():
     # Se crea el diccionario con la informacion de la partida
     partida = {
         "turno_actual" : turno_actual,
-        "ultimos_dados" : ultimos_dados,
         "solicitud_esperada" : solicitud_esperada,
-        "estado_partida" : estado_partida
+        "estado_partida" : estado_partida,
+        "ultimos_dados" : ultimos_dados
     }
     # Se agrega la informacion de cada cliente
+    jugadores = []
     for cliente in hilos_clientes:
-        if cliente.nombre != None and cliente.color != None:
-            informacion_cliente = {
-                cliente.color : {
-                        "nombre": cliente.nombre,
-                        "color": cliente.color,
-                        "fichas": cliente.fichas,
-                        "contadores_fichas": cliente.contadores_fichas,
-                    }
-                }
-            partida.update(informacion_cliente)
+        # if cliente.nombre != None and cliente.color != None:
+        informacion_cliente = {
+                "nombre": cliente.nombre,
+                "color": cliente.color,
+                "fichas": cliente.fichas,
+                "contadores_fichas": cliente.contadores_fichas,
+            }
+        jugadores.append(informacion_cliente)
+    partida["jugadores"] = jugadores
     return partida
 
 # Funcion que retorna el o los colores con el valor maximo de la suma de los dados
@@ -675,12 +682,12 @@ def reiniciar_partida():
     # Se inicializan las variables globales para el proximo juego
     hilos_clientes = [] # Hilos de los clientes
     colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
-    turno_actual = None # Color del jugador con el turno actual
+    turno_actual = "" # Color del jugador con el turno actual
     orden_turnos = [] # Orden de los turnos en la partida
-    ultimos_dados = {"D1" : None, "D2" : None} # Valor de los dados de la ultima jugada (1-6)
+    ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
     registro_dados = {} # Registro de los dados lanzados en una ronda
     pares_seguidos = 0 # Contador de los pares seguidos por un jugador
-    solicitud_esperada = None # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
+    solicitud_esperada = "" # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
     estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego)
 
     # Se imprime el mensaje en el servidor
@@ -732,12 +739,12 @@ print(f"Servidor esperando conexiones en {HOST}:{PORT}...")
 # Se inicializan las variables globales
 hilos_clientes = [] # Hilos de los clientes
 colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
-turno_actual = None # Color del jugador con el turno actual
+turno_actual = "" # Color del jugador con el turno actual
 orden_turnos = [] # Orden de los turnos en la partida
-ultimos_dados = {"D1" : None, "D2" : None} # Valor de los dados de la ultima jugada (1-6)
+ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
 registro_dados = {} # Registro de los dados lanzados en una ronda
 pares_seguidos = 0 # Contador de los pares seguidos por un jugador
-solicitud_esperada = None # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
+solicitud_esperada = "" # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
 estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego)
 
 # Hilo que actua como receptor de clientes
