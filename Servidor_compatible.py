@@ -647,15 +647,15 @@ def definir_turnos():
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
-        # Se envia la informacion de la partida actualizada a todos los clientes
-        mensaje = informacion_partida()
-        broadcast(mensaje)
         # Se imprime el mensaje en el servidor
         print("Empate de turnos: ", orden_turnos)
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
         # Se actualiza el turno
         siguiente_turno()
+        # Se envia la informacion de la partida actualizada a todos los clientes
+        mensaje = informacion_partida()
+        broadcast(mensaje)
 
 # Funcion que reinicia la partida (expulsa los jugadores y reinicia las variables)
 def reiniciar_partida():
