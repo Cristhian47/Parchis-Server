@@ -13,9 +13,13 @@ cliente.connect((HOST, PORT))
 #Funcion para el hilo de cliente
 def receive_messages():
     while True:
-        data = cliente.recv(1024).decode('utf-8')
-        if data:
-            print("Mensaje recibido: " + data)
+        try:
+            data = cliente.recv(1024).decode('utf-8')
+            if data:
+                print("Mensaje recibido: " + data)
+        except:
+            print("Desconectado del servidor")
+            break
 
 #Hilo para estar en constante funcionamiento
 thread = threading.Thread(target=receive_messages)

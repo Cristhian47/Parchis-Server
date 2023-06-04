@@ -298,6 +298,8 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
+                # Reiniciar la partida
+                reiniciar_partida()
             else:
                 # Se actualiza los turnos
                 self.turnos = 0
@@ -406,6 +408,8 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
+                # Reiniciar la partida
+                reiniciar_partida()
             else:
                 # Se actualiza los turnos
                 if self.turnos == 0:
@@ -452,9 +456,6 @@ class Cliente(threading.Thread):
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
-        # Se imprime el mensaje en el servidor
-        print("Desconexión causada por:", (self.ip, self.puerto))
-
         # Variables globales
         global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada
 
@@ -488,6 +489,8 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + ganador + " ha ganado la partida")
+                # Reiniciar la partida
+                reiniciar_partida()
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
@@ -524,6 +527,8 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + ganador + " ha ganado la partida")
+                # Reiniciar la partida
+                reiniciar_partida()
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
@@ -546,14 +551,19 @@ class Cliente(threading.Thread):
                 if mensaje:
                     self.procesar_informacion(mensaje)
                 else:
+                    # Se imprime el mensaje en el servidor
+                    print("Desconexión (1) por:", (self.ip, self.puerto))
                     # Se termina la conexion
-                    self.cerrar_conexion()
+                    if estado_partida != "finalizada":
+                        self.cerrar_conexion()
                     # Se termina el hilo
                     break
-            # La conexión cuando se cierra abruptamente
             except:
+                # Se imprime el mensaje en el servidor
+                print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
-                self.cerrar_conexion()
+                if estado_partida != "finalizada":
+                    self.cerrar_conexion()
                 # Se termina el hilo
                 break
 
@@ -690,13 +700,10 @@ def reiniciar_partida():
     # Se imprime el mensaje en el servidor
     print("Desconectando clientes: ", hilos_clientes)
 
-    # Se cierran los sockets de los clientes
+    # Se cierran los sockets y lo hilos de los clientes
     for cliente in hilos_clientes:
         cliente.connection.close()
-
-    # Esperar a que los hilos clientes finalicen
-    for thread in hilos_clientes:
-        thread.join()
+        cliente.join()
 
     # Se inicializan las variables globales para el proximo juego
     hilos_clientes = [] # Hilos de los clientes
