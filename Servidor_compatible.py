@@ -457,7 +457,7 @@ class Cliente(threading.Thread):
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
         # Variables globales
-        global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada
+        global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada, pares_seguidos
 
         # Se termina la conexion
         self.connection.close()
@@ -532,6 +532,8 @@ class Cliente(threading.Thread):
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
+                    # Se reinicia el contador de pares seguidos
+                    pares_seguidos = 0
                     # Se actualiza el turno
                     siguiente_turno()
                     # Se actualiza la solicitud esperada
