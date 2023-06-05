@@ -4,6 +4,7 @@ import json
 import time
 import random
 import IP
+from queue import Queue
 
 #Bots iniciaados para funcionar
 list_bots = []
@@ -32,15 +33,14 @@ class BOT(threading.Thread):
         self.bot.connect((IP.HOST_SERVER, IP.PORT_SERVER))
 
     # Que es lo  que viene en el mensaje
-    def procesar_informacion(self, msg):
-        informacion = json.loads(msg)
+    def procesar_informacion(self, informacion):
         if 'turno_actual' in informacion.keys():
             if informacion['estado_partida'] == "lobby":
                 pass
             elif informacion['estado_partida'] == "turnos":
                 if informacion['turno_actual'] == self.color:
                     self.lanzar_dados()
-                    print("lanzando dados")
+                    print(f"({self.nombre}): Lanzando dados")
                     self.d1 = None
                     self.d2 = None
             elif informacion['estado_partida'] == "juego":
@@ -49,7 +49,7 @@ class BOT(threading.Thread):
                     dado_2 = informacion['ultimos_dados']['D2']
                     if dado_1 != self.d1 and dado_2 != self.d2:
                         self.lanzar_dados()
-                        print("lanzando dados")
+                        print(f"({self.nombre}): anzando dados")
                         if self.d1 == self.d2:
                             self.contador_pares += 1
                     elif dado_1 == self.d1 and dado_2 == self.d2:   
@@ -85,11 +85,11 @@ class BOT(threading.Thread):
                         contador_carcel += 1
         
         if contador_carcel != 4 or self.d1 == self.d2:
-            print("Entrando a determinar movimiento")
+            print(f"({self.nombre}): Entrando a determinar movimiento")
             #Determinar cuantos pares llevo y si son 3 coronar una ficha
             menor_recorrido = 1000
             if self.contador_pares == 3:
-                print("Estoy pensando en coronar")
+                print(f"({self.nombre}): Estoy pensando en coronar")
                 for mi_juego in informacion_jugadores['jugadores']:
                     if mi_juego['nombre'] == self.nombre:
                         for fichas_mias in mi_juego['contadores_fichas'].keys():
@@ -101,7 +101,7 @@ class BOT(threading.Thread):
                 self.sacar_ficha(ficha_coronar)          
             #Determinar si los dados son pares y sacar de la carcel
             elif self.d1 == self.d2:
-                print("Estoy pensando en sacar de la carcel")
+                print(f"({self.nombre}): Estoy pensando en sacar de la carcel")
                 for mi_juego in informacion_jugadores['jugadores']:
                     if mi_juego['nombre'] == self.nombre:
                         for fichas_mias in mi_juego['fichas'].keys():
@@ -109,13 +109,13 @@ class BOT(threading.Thread):
                                 self.sacar_carcel(fichas_mias)
                                 break
             else:
-                print("Estoy pensando en mover")
+                print(f"({self.nombre}): Estoy pensando en mover")
                 dados_usados = False
                 #Determinar que movimiento es mejor, comer, mover, coronar, quedar en seguro 
                 suma_dados = self.d1 + self.d2
                 if dados_usados == False:
                     #Determinar si puedo coronar una ficha
-                    print("Estoy pensando en coronar moviendo ficha")
+                    print(f"({self.nombre}): Estoy pensando en coronar moviendo ficha")
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
                             for fichas_mias in mi_juego['contadores_fichas'].keys():
@@ -126,7 +126,7 @@ class BOT(threading.Thread):
                                         break
                 if dados_usados == False:
                     #Determinar si puedo comer una ficha
-                    print("Estoy pensando en comer")
+                    print(f"({self.nombre}): Estoy pensando en comer")
                     posicion_fichas_mias = []
 
                     for mi_juego in informacion_jugadores['jugadores']:
@@ -150,7 +150,7 @@ class BOT(threading.Thread):
                                                     break
                 if dados_usados == False:
                     posicion_fichas_mias = []
-                    print("Estoy pensando en mover ficha a seguro")
+                    print(f"({self.nombre}): Estoy pensando en mover ficha a seguro")
                     #Determinar si al mover una ficha quedo en seguro contando la escalera
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
@@ -171,7 +171,7 @@ class BOT(threading.Thread):
                             break
                 if dados_usados == False:
                     fichas_posibles = []
-                    print("No se que hacer, movere aleatoriamente")
+                    print(f"({self.nombre}): No se que hacer, movere aleatoriamente")
                     #Si no se cumple ninguna de las anteriores, mover una ficha aleatoria
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
@@ -189,7 +189,7 @@ class BOT(threading.Thread):
             self.d2 = None
         else:
             self.lanzar_dados()
-            print("lanzando dados")
+            print(f"({self.nombre}): Lanzando dados")
         
         
     #Funcion para sumar los dados a mi poscion
@@ -250,17 +250,49 @@ class BOT(threading.Thread):
                 informacion = {"tipo": "solicitud_iniciar_partida"}
                 self.enviar_respuesta(informacion)
                 break
+
+        #Cola de mensajes
+        self.cola_mensajes = Queue()
+        self.id_mensaje = 1
+
+        # Crear hilo para manejar mensajes
+        hilo_mensajes = threading.Thread(target=self.manejar_mensajes)
+        hilo_mensajes.start()
+
+        # Ciclo para recibir mensajes
         while True:
-            try:    
-                data = self.bot.recv(1024)
+            try:
+                data = self.bot.recv(1024).decode('utf-8')
                 if data:
-                    self.procesar_informacion(data.decode('utf-8'))
+                    data = json.loads(data)
+                    self.cola_mensajes.put(data)
             except:
+                print(f"{self.nombre} desconectado")
                 # Se termina la conexion
                 self.bot.close()
                 # Se elimina el jugador y se cierra la conexion e hilo
                 self.cerrar_conexion()
                 break
+
+    # Funcion para procesar la informacion recibida
+    def manejar_mensajes(self):
+        while True:
+            if not self.cola_mensajes.empty():
+                # Procesar mensaje
+                data = self.cola_mensajes.get()
+                if "id_broadcast" in data:
+                    if data['estado_partida'] != "lobby":
+                        if data['id_broadcast'] == self.id_mensaje:
+                            # Ejecuto la accion del mensaje
+                            self.id_mensaje += 1
+                            self.procesar_informacion(data)
+                        else:
+                            # Devuelvo el mensaje a la cola
+                            self.cola_mensajes.put(data)
+                    else:
+                        self.procesar_informacion(data)
+                else:
+                    self.procesar_informacion(data)
 
 while True:
     connection, address = servidor_bot.accept()

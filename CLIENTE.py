@@ -3,6 +3,10 @@ import socket
 import threading
 import json
 import IP
+from queue import Queue
+
+cola_mensajes = Queue()
+id_mensaje = 1
 
 # Conectarse al servidor
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -12,16 +16,39 @@ cliente.connect((IP.HOST_SERVER, IP.PORT_SERVER))
 def receive_messages():
     while True:
         try:
-            data = cliente.recv(1024).decode('utf-8')
-            if data:
-                print("Mensaje recibido: " + data + "\n")
+            mensaje = cliente.recv(1024).decode('utf-8')
+            if mensaje:
+                mensaje = json.loads(mensaje)
+                cola_mensajes.put(mensaje)
         except:
             print("Desconectado del servidor")
             break
 
+def manejar_mensajes():
+    global id_mensaje
+    while True:
+        if not cola_mensajes.empty():
+            # Procesar mensaje
+            mensaje = cola_mensajes.get()
+            if "id_broadcast" in mensaje:
+                if mensaje['estado_partida'] != "lobby":
+                    if mensaje['id_broadcast'] == id_mensaje:
+                        # Ejecuto la accion del mensaje
+                        id_mensaje += 1
+                        print("Mensaje recibido: ", mensaje, "\n")
+                    else:
+                        # Devuelvo el mensaje a la cola
+                        cola_mensajes.put(mensaje)
+                else:
+                    print("Mensaje recibido: ", mensaje, "\n")
+            else:
+                print("Mensaje recibido: ", mensaje, "\n")
+
 #Hilo para estar en constante funcionamiento
 thread = threading.Thread(target=receive_messages)
+thread2 = threading.Thread(target=manejar_mensajes)
 thread.start()
+thread2.start()
 
 #Enviar solicitud de colores disponibles
 def solicitud_color():

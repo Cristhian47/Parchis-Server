@@ -542,8 +542,6 @@ class Cliente(threading.Thread):
     def enviar_respuesta(self, informacion):
         respuesta = json.dumps(informacion)
         self.connection.sendall(respuesta.encode('utf-8'))
-        # Esperar 0.1 segundos para evitar que se junten los mensajes
-        time.sleep(0.1)
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
@@ -677,8 +675,23 @@ class Cliente(threading.Thread):
 
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
+    global id_broadcast
+    # Se bloquea el acceso
+    lock.acquire()
+    # Se agrega el ID al broadcast
+    if "id_broadcast" in mensaje:
+        if mensaje["estado_partida"] != "lobby":
+            id_broadcast += 1
+            mensaje["id_broadcast"] = id_broadcast
     for client in hilos_clientes:
         client.enviar_respuesta(mensaje)
+    # Esperar 0.1 segundos para evitar que se junten los mensajes
+    time.sleep(0.1)    
+    # Se libera el bloqueo
+    lock.release()
+
+# Crear un objeto de bloqueo
+lock = threading.Lock()
 
 # Funcion que comprueba si se puede iniciar la partida
 def iniciar_partida():
@@ -709,6 +722,7 @@ def iniciar_partida():
 def informacion_partida():
     # Se crea el diccionario con la informacion de la partida
     partida = {
+        "id_broadcast" : id_broadcast,
         "turno_actual" : turno_actual,
         "solicitud_esperada" : solicitud_esperada,
         "estado_partida" : estado_partida,
@@ -818,6 +832,7 @@ def reiniciar_partida():
         cliente.join()
 
     # Se inicializan las variables globales para el proximo juego
+    id_broadcast = 0 # Identificador de los mensajes broadcast
     hilos_clientes = [] # Hilos de los clientes
     colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
     turno_actual = "" # Color del jugador con el turno actual
@@ -873,6 +888,7 @@ servidor.listen(10)
 print(f"Servidor esperando conexiones en {IP.HOST_SERVER}:{IP.PORT_SERVER}...")
 
 # Se inicializan las variables globales
+id_broadcast = 0 # Identificador de los mensajes broadcast
 hilos_clientes = [] # Hilos de los clientes
 colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
 turno_actual = "" # Color del jugador con el turno actual
