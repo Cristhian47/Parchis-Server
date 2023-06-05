@@ -2,13 +2,11 @@
 import socket
 import threading
 import json
-
-HOST = "192.168.0.15"  # El host del servidor
-PORT = 8001        # El puerto del servidor
+import IP
 
 # Conectarse al servidor
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect((HOST, PORT))
+cliente.connect((IP.HOST_SERVER, IP.PORT_SERVER))
 
 #Funcion para el hilo de cliente
 def receive_messages():

@@ -52,6 +52,7 @@ import socket
 import threading
 import json
 import time
+import IP
 
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
@@ -149,7 +150,7 @@ class Cliente(threading.Thread):
             try:
                 # Se crea el socket para conectarse al bot
                 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                servidor_bot.connect(("localhost", 8002))
+                servidor_bot.connect((IP.HOST_BOT, IP.PORT_BOT))
                 # Se envia el mensaje al BotAI
                 mensaje = {"tipo": "Activar_bot"}
                 servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
@@ -847,17 +848,13 @@ def recibir_clientes():
             # Inicia el hilo
             thread.start()
 
-# Datos del servidor
-HOST = "192.168.0.15"  # El host del servidor
-PORT = 8001         # El puerto del servidor
-
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind((HOST, PORT))
+servidor.bind((IP.HOST_SERVER, IP.PORT_SERVER))
 servidor.listen(10)
 
 # Se imprime el mensaje en el servidor
-print(f"Servidor esperando conexiones en {HOST}:{PORT}...")
+print(f"Servidor esperando conexiones en {IP.HOST_SERVER}:{IP.PORT_SERVER}...")
 
 # Se inicializan las variables globales
 hilos_clientes = [] # Hilos de los clientes

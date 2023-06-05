@@ -3,16 +3,14 @@ import threading
 import json
 import time
 import random
+import IP
 
 #Bots iniciaados para funcionar
 list_bots = []
 
 #conexion para el bot
-HOST_BOT = 'localhost'  # El host del servidor
-PORT_BOT = 8002 # El puerto del servidor
-
 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor_bot.bind((HOST_BOT, PORT_BOT))
+servidor_bot.bind((IP.HOST_BOT, IP.PORT_BOT))
 servidor_bot.listen(10)
 
 class BOT(threading.Thread):
@@ -31,7 +29,7 @@ class BOT(threading.Thread):
     #Activamos la conexion con el servidor principal
     def activar_conexion(self):
         self.bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bot.connect(("localhost", 8001))
+        self.bot.connect((IP.HOST_SERVER, IP.PORT_SERVER))
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, msg):
