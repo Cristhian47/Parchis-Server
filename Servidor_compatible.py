@@ -270,7 +270,7 @@ class Cliente(threading.Thread):
     # El cliente saca una ficha del tablero {"tipo": "sacar_ficha", "ficha": "F1"}
     def procesar_sacar_ficha(self, informacion):
         # Variables globales
-        global solicitud_esperada, estado_partida, turno_actual
+        global solicitud_esperada, estado_partida, turno_actual, hilos_clientes
 
         # Se extraen los argumentos
         ficha = informacion["ficha"]
@@ -306,6 +306,10 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
+                # Se termina la conexion (Se quita el control al jugador para usar su hilo para reiniciar la partida)
+                self.connection.close()
+                # Se elimina el cliente de la lista de hilos
+                hilos_clientes.remove(self)
                 # Reiniciar la partida
                 reiniciar_partida()
             else:
@@ -355,7 +359,7 @@ class Cliente(threading.Thread):
     # El cliente mueve una ficha {"tipo": "mover_ficha", "ficha": "F1"}
     def procesar_mover_ficha(self, informacion):
         # Variables globales
-        global estado_partida, hilos_clientes, solicitud_esperada, turno_actual
+        global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes
 
         # Se extraen los argumentos
         ficha = informacion["ficha"]
@@ -423,6 +427,10 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
+                # Se termina la conexion (Se quita el control al jugador para usar su hilo para reiniciar la partida)
+                self.connection.close()
+                # Se elimina el cliente de la lista de hilos
+                hilos_clientes.remove(self)
                 # Reiniciar la partida
                 reiniciar_partida()
             else:
@@ -587,7 +595,7 @@ class Cliente(threading.Thread):
                     # Se imprime el mensaje en el servidor
                     print("Desconexión (1) por:", (self.ip, self.puerto))
                     # Se termina la conexion
-                    if estado_partida != "finalizada":
+                    if estado_partida != "finalizada" and self in hilos_clientes:
                         self.cerrar_conexion()
                     # Se termina el hilo
                     break
@@ -595,10 +603,11 @@ class Cliente(threading.Thread):
                 # Se imprime el mensaje en el servidor
                 print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
-                if estado_partida != "finalizada":
+                if estado_partida != "finalizada" and self in hilos_clientes:
                     self.cerrar_conexion()
                 # Se termina el hilo
                 break
+        print("Hilo terminado: ", (self.ip, self.puerto))
 
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
