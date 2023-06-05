@@ -26,6 +26,8 @@ BROADCAST DE SALIDA
         "D1":5,
         "D2":1
     },
+    "ultima_ficha" : "F2",
+    "ultimo_turno" : "Blue",
     "jugadores" : [
         {
             "nombre":"Juan",
@@ -311,7 +313,7 @@ class Cliente(threading.Thread):
     # El cliente saca una ficha del tablero {"tipo": "sacar_ficha", "ficha": "F1"}
     def procesar_sacar_ficha(self, informacion):
         # Variables globales
-        global solicitud_esperada, estado_partida, turno_actual, hilos_clientes
+        global solicitud_esperada, estado_partida, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
         try:
@@ -332,6 +334,8 @@ class Cliente(threading.Thread):
         if respuesta:
             self.enviar_respuesta(respuesta)
         else:
+            # Se actualiza el ultimo movimiento
+            ultima_ficha = ficha
             # Se actualiza la posicion de la ficha
             self.fichas[ficha] = "Meta"
             # Se actualiza la posicion de la posicion
@@ -372,7 +376,7 @@ class Cliente(threading.Thread):
     # El cliente saca una ficha de la carcel {"tipo": "sacar_carcel", "ficha": "F1"}
     def procesar_sacar_carcel(self, informacion):
         # Variables globales
-        global solicitud_esperada
+        global solicitud_esperada, ultima_ficha
 
         # Se extraen los argumentos
         try:
@@ -393,6 +397,8 @@ class Cliente(threading.Thread):
         if respuesta:
             self.enviar_respuesta(respuesta)
         else:
+            # Se actualiza el ultimo movimiento
+            ultima_ficha = ficha
             # Se actualiza la posicion de la ficha
             casillas_salida = {"Yellow": 56, "Blue": 5, "Green": 22, "Red": 39}
             self.fichas[ficha] = casillas_salida[self.color]
@@ -410,7 +416,7 @@ class Cliente(threading.Thread):
     # El cliente mueve una ficha {"tipo": "mover_ficha", "ficha": "F1"}
     def procesar_mover_ficha(self, informacion):
         # Variables globales
-        global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes
+        global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
         try:
@@ -433,6 +439,10 @@ class Cliente(threading.Thread):
         if respuesta:
             self.enviar_respuesta(respuesta)
         else:
+            # Se actualiza el ultimo movimiento
+            ultima_ficha = ficha
+            
+            # Se calcula la nueva posicion
             dados_suma = ultimos_dados["D1"] + ultimos_dados["D2"]
             nueva_posicion = self.fichas[ficha] + dados_suma
             nuevo_contador = self.contadores_fichas[ficha] + dados_suma
@@ -702,7 +712,9 @@ def informacion_partida():
         "turno_actual" : turno_actual,
         "solicitud_esperada" : solicitud_esperada,
         "estado_partida" : estado_partida,
-        "ultimos_dados" : ultimos_dados
+        "ultimos_dados" : ultimos_dados,
+        "ultima_ficha" : ultima_ficha,
+        "ultimo_turno" : ultimo_turno,
     }
     # Se agrega la informacion de cada cliente
     jugadores = []
@@ -733,7 +745,9 @@ def mayor_suma(registro_dados):
 # Funcion que actualiza el turno
 def siguiente_turno():
     # Se importan las variables globales
-    global turno_actual
+    global turno_actual, ultimo_turno
+    # Se actualiza el ultimo turno
+    ultimo_turno = turno_actual
     # Se obtiene el índice del siguiente color
     indice_siguiente = (orden_turnos.index(turno_actual) + 1) % len(orden_turnos)
     # Se actualiza el turno actual
@@ -808,6 +822,8 @@ def reiniciar_partida():
     colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
     turno_actual = "" # Color del jugador con el turno actual
     orden_turnos = [] # Orden de los turnos en la partida
+    ultima_ficha = "" # Ultima ficha movida
+    ultimo_turno = "" # Color del jugador del ultimo turno
     ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
     registro_dados = {} # Registro de los dados lanzados en una ronda
     pares_seguidos = 0 # Contador de los pares seguidos por un jugador
@@ -861,6 +877,8 @@ hilos_clientes = [] # Hilos de los clientes
 colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
 turno_actual = "" # Color del jugador con el turno actual
 orden_turnos = [] # Orden de los turnos en la partida
+ultima_ficha = "" # Ultima ficha movida
+ultimo_turno = "" # Color del jugador del ultimo turno
 ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
 registro_dados = {} # Registro de los dados lanzados en una ronda
 pares_seguidos = 0 # Contador de los pares seguidos por un jugador

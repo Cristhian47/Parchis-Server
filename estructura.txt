@@ -6,6 +6,8 @@
         "D1":5,
         "D2":1
     },
+    "ultima_ficha" : "F2",
+    "ultimo_turno" : "Blue",
     "jugadores" : [
         {
             "nombre":"Juan",
