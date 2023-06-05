@@ -16,7 +16,7 @@ def receive_messages():
         try:
             data = cliente.recv(1024).decode('utf-8')
             if data:
-                print("Mensaje recibido: " + data)
+                print("Mensaje recibido: " + data + "\n")
         except:
             print("Desconectado del servidor")
             break

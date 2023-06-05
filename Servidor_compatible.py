@@ -50,6 +50,7 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
+import time
 
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
@@ -269,7 +270,7 @@ class Cliente(threading.Thread):
     # El cliente saca una ficha del tablero {"tipo": "sacar_ficha", "ficha": "F1"}
     def procesar_sacar_ficha(self, informacion):
         # Variables globales
-        global solicitud_esperada, estado_partida
+        global solicitud_esperada, estado_partida, turno_actual
 
         # Se extraen los argumentos
         ficha = informacion["ficha"]
@@ -293,6 +294,13 @@ class Cliente(threading.Thread):
             if self.comprobar_meta():
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
+                # Se actualiza la solicitud esperada
+                solicitud_esperada = ""
+                # Se actualiza el turno actual
+                turno_actual = ""
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 mensaje = ({"tipo": "finalizar", "ganador": self.color})
                 broadcast(mensaje)
@@ -347,7 +355,7 @@ class Cliente(threading.Thread):
     # El cliente mueve una ficha {"tipo": "mover_ficha", "ficha": "F1"}
     def procesar_mover_ficha(self, informacion):
         # Variables globales
-        global estado_partida, hilos_clientes, solicitud_esperada
+        global estado_partida, hilos_clientes, solicitud_esperada, turno_actual
 
         # Se extraen los argumentos
         ficha = informacion["ficha"]
@@ -403,6 +411,13 @@ class Cliente(threading.Thread):
             if self.comprobar_meta():
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
+                # Se actualiza la solicitud esperada
+                solicitud_esperada = ""
+                # Se actualiza el turno actual
+                turno_actual = ""
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 mensaje = ({"tipo": "finalizar", "ganador": self.color})
                 broadcast(mensaje)
@@ -453,11 +468,13 @@ class Cliente(threading.Thread):
     def enviar_respuesta(self, informacion):
         respuesta = json.dumps(informacion)
         self.connection.sendall(respuesta.encode('utf-8'))
+        # Esperar 0.1 segundos para evitar que se junten los mensajes
+        time.sleep(0.1)
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
         # Variables globales
-        global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada, pares_seguidos
+        global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada, pares_seguidos, turno_actual
 
         # Se termina la conexion
         self.connection.close()
@@ -483,6 +500,13 @@ class Cliente(threading.Thread):
             if len(hilos_clientes) < 2:
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
+                # Se actualiza la solicitud esperada
+                solicitud_esperada = ""
+                # Se actualiza el turno actual
+                turno_actual = ""
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 ganador = hilos_clientes[0].color
                 mensaje = ({"tipo": "finalizar", "ganador": ganador})
@@ -521,6 +545,13 @@ class Cliente(threading.Thread):
             if len(hilos_clientes) < 2:
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
+                # Se actualiza la solicitud esperada
+                solicitud_esperada = ""
+                # Se actualiza el turno actual
+                turno_actual = ""
+                # Se envia la informacion de la partida actualizada a todos los clientes
+                mensaje = informacion_partida()
+                broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 ganador = hilos_clientes[0].color
                 mensaje = ({"tipo": "finalizar", "ganador": ganador})
