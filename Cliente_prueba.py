@@ -67,6 +67,11 @@ def solicitud_mover_ficha():
     solicitud = {"tipo": "mover_ficha", "ficha": ficha}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
 
+#Enviar solicitud de mover ficha en el tablero
+def solicitud_bot():
+    solicitud = {"tipo": "solicitud_bot"}
+    cliente.sendall(json.dumps(solicitud).encode('utf-8'))
+
 print("1. solicitud_color")
 print("2. seleccion_color")
 print("3. solicitud_iniciar_partida")
@@ -74,6 +79,7 @@ print("4. solicitud_lanzar_dados")
 print("5. solicitud_sacar_ficha")
 print("6. solicitud_sacar_carcel")
 print("7. solicitud_mover_ficha")
+print("8. solicitud_bot")
 while True:
     solicitud = int(input("\nIngrese tipo de solicitud... "))
     if solicitud == 1:
@@ -90,6 +96,8 @@ while True:
         solicitud_sacar_carcel()
     elif solicitud == 7:
         solicitud_mover_ficha()
+    elif solicitud == 8:
+        solicitud_bot()
 
 
 

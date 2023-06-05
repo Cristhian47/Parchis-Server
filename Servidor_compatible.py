@@ -9,6 +9,7 @@ SOLICITUDES DE ENTRADA
 {"tipo": "sacar_ficha", "ficha": "F1"}
 {"tipo": "sacar_carcel", "ficha": "F1"}
 {"tipo": "mover_ficha", "ficha": "F1"}
+{"tipo": "solicitud_bot"}
 
 RESPUESTAS DE SALIDA
 {"tipo": "denegado", "razon": "mensaje"}
@@ -88,6 +89,7 @@ class Cliente(threading.Thread):
             "solicitud_color": self.procesar_solicitud_color,
             "seleccion_color": self.procesar_seleccion_color,
             "solicitud_iniciar_partida": self.procesar_solicitud_iniciar_partida,
+            "solicitud_bot": self.procesar_solicitud_bot,
         }
 
         # Diccionario para manejar las solicitudes esperadas en juego
@@ -99,7 +101,13 @@ class Cliente(threading.Thread):
         }
 
         # Se obtiene el tipo de solicitud
-        solicitud = informacion["tipo"]
+        try:
+            solicitud = informacion["tipo"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
+            self.enviar_respuesta(respuesta)
+            return
+        
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
             solicitudes_lobby[solicitud](informacion)
@@ -127,11 +135,38 @@ class Cliente(threading.Thread):
         respuesta = colores_disponibles
         self.enviar_respuesta(respuesta)
 
+    # El cliente añade un bot {"tipo": "solicitud_bot"}
+    def procesar_solicitud_bot(self, informacion):
+       # Se valida la congruencia de los argumentos
+        respuesta = None
+        if len(hilos_clientes) > 3:
+            respuesta = {"tipo": "denegado", "razon": "maximo de jugadores alcanzado"}
+
+        # Se rechaza o se ejecuta la solicitud
+        if respuesta:
+            self.enviar_respuesta(respuesta)
+        else:
+            try:
+                # Se crea el socket para conectarse al bot
+                servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                servidor_bot.connect(("localhost", 8002))
+                # Se envia el mensaje al BotAI
+                mensaje = {"tipo": "Activar_bot"}
+                servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
+            except:
+                respuesta = {"tipo": "denegado", "razon": "no se pudo conectar con el bot"}
+                self.enviar_respuesta(respuesta)
+
     # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
     def procesar_seleccion_color(self, informacion):
         # Se extraen los argumentos
-        nombre = informacion["nombre"]
-        color = informacion["color"]
+        try:
+            nombre = informacion["nombre"]
+            color = informacion["color"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -181,8 +216,13 @@ class Cliente(threading.Thread):
         global ultimos_dados, registro_dados, pares_seguidos, solicitud_esperada
 
         # Se extraen los argumentos
-        D1 = informacion["dados"]["D1"]
-        D2 = informacion["dados"]["D2"]
+        try:
+            D1 = informacion["dados"]["D1"]
+            D2 = informacion["dados"]["D2"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -273,8 +313,13 @@ class Cliente(threading.Thread):
         global solicitud_esperada, estado_partida, turno_actual, hilos_clientes
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
-        
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
+
         # Se valida la congruencia de los argumentos
         respuesta = None
         if ficha not in self.fichas:
@@ -329,8 +374,13 @@ class Cliente(threading.Thread):
         global solicitud_esperada
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
-        
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
+
         # Se valida la congruencia de los argumentos
         respuesta = None
         if ficha not in self.fichas:
@@ -362,7 +412,12 @@ class Cliente(threading.Thread):
         global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -820,19 +875,6 @@ thread = threading.Thread(target=recibir_clientes)
 
 # Iniciar el hilo receptor de clientes
 thread.start()
-
-'''
-# Funcion para conectarse al BotAI
-def conexion_bot():
-    # Se crea el socket para conectarse al BotAI
-    servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    servidor_bot.connect(("localhost", 8002))
-    # Se envia el mensaje al BotAI
-    mensaje = {"tipo": "Activar_bot"}
-    servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
-
-conexion_bot()
-'''
 
 # Esperar a que el hilo receptor de clientes finalice
 thread.join()
