@@ -65,7 +65,6 @@ class BOT(threading.Thread):
                 print(informacion)
             elif informacion['tipo'] == "finalizar":
                 self.cerrar_conexion()
-                self.bot.close()
         
     #Funcion para lanzar los dados
     def lanzar_dados(self):
@@ -186,8 +185,9 @@ class BOT(threading.Thread):
                             for fichas_mias in mi_juego['fichas'].keys():
                                 if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                     fichas_posibles.append(fichas_mias)
-
-                    if len(fichas_posibles) > 0:            
+                    print(len(fichas_posibles))
+                    print(informacion_jugadores)
+                    if len(fichas_posibles) > 0:
                         ficha_aleatoria = random.choice(fichas_posibles)
                         dados_usados = True
                         self.mover_ficha(ficha_aleatoria)
@@ -232,8 +232,6 @@ class BOT(threading.Thread):
     def cerrar_conexion(self):
         global list_bots
         list_bots.remove(self)
-        print("Bot desconectado")
-        print("Cantidad de bots activos: ", len(list_bots))
 
     # Funcion que se ejecuta cuando se inicia el hilo
     def run(self):
@@ -276,7 +274,6 @@ class BOT(threading.Thread):
                     data = json.loads(data)
                     self.cola_mensajes.put(data)
             except:
-                self.bot.close()
                 print(f"{self.nombre} desconectado")
                 break
 
