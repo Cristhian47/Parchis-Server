@@ -33,7 +33,15 @@ class BOT(threading.Thread):
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, informacion):
-        if 'turno_actual' in informacion.keys():
+        if 'tipo' in informacion.keys():
+            if informacion['tipo'] == "conexion":
+                print(informacion)
+            elif informacion['tipo'] == "desconexion":
+                print(informacion)
+            elif informacion['tipo'] == "finalizar":
+                self.cerrar_conexion()
+
+        elif 'turno_actual' in informacion.keys():
             if informacion['estado_partida'] == "lobby":
                 pass
             elif informacion['estado_partida'] == "turnos":
@@ -57,14 +65,6 @@ class BOT(threading.Thread):
                     self.d1 = None
                     self.d2 = None
                     self.contador_pares = 0
-
-        if 'tipo' in informacion.keys():
-            if informacion['tipo'] == "conexion":
-                print(informacion)
-            elif informacion['tipo'] == "desconexion":
-                print(informacion)
-            elif informacion['tipo'] == "finalizar":
-                self.cerrar_conexion()
         
     #Funcion para lanzar los dados
     def lanzar_dados(self):
