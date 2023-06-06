@@ -86,6 +86,7 @@ class BOT(threading.Thread):
         
         if contador_carcel != 4 or self.d1 == self.d2:
             print(f"({self.nombre}): Entrando a determinar movimiento")
+            dados_usados = False
             #Determinar cuantos pares llevo y si son 3 coronar una ficha
             menor_recorrido = 1000
             if self.contador_pares == 3:
@@ -107,10 +108,11 @@ class BOT(threading.Thread):
                         for fichas_mias in mi_juego['fichas'].keys():
                             if mi_juego['fichas'][fichas_mias] == "Carcel":
                                 self.sacar_carcel(fichas_mias)
+                                dados_usados = True
                                 break
-            else:
+                                
+            if self.d1 and self.d2 and dados_usados == False:
                 print(f"({self.nombre}): Estoy pensando en mover")
-                dados_usados = False
                 #Determinar que movimiento es mejor, comer, mover, coronar, quedar en seguro 
                 suma_dados = self.d1 + self.d2
                 if dados_usados == False:
