@@ -144,7 +144,7 @@ class BOT(threading.Thread):
                             for fichas_rivales in rivales['fichas'].keys():
                                 posicion_rival = rivales['fichas'][fichas_rivales]
                                 if rivales['contadores_fichas'][fichas_rivales] < 63:
-                                    if posicion_rival != 'Carcel' and posicion_rival != 'Meta'and posicion_rival not in self.casillas_seguras:
+                                    if posicion_rival != 'Carcel' and posicion_rival != 'Meta'and posicion_rival not in self.seguras:
                                         for posicion_mia in posicion_fichas_mias:
                                             if posicion_mia[1] < 63:
                                                 if posicion_mia[0] == posicion_rival:
