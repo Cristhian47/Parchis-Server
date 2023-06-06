@@ -12,7 +12,7 @@ list_bots = []
 
 #conexion para el bot
 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor_bot.bind((IP.HOST_BOT, IP.PORT_BOT))
+servidor_bot.bind(("172.31.1.101", 8002))
 servidor_bot.listen(10)
 
 class BOT(threading.Thread):
@@ -30,7 +30,7 @@ class BOT(threading.Thread):
     #Activamos la conexion con el servidor principal
     def activar_conexion(self):
         self.bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bot.connect((IP.HOST_SERVER, IP.PORT_SERVER))
+        self.bot.connect(("3.17.187.70", 8001))
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, informacion):
@@ -320,6 +320,7 @@ def cerrar_conexion():
             for index in list_bots:
                 if index == bot:
                     list_bots.remove(index)
+                    print(len(list_bots))
         cola_cerrar_hilo.task_done()
 
 cerrar_conexion_hilo = threading.Thread(target=cerrar_conexion)

@@ -190,7 +190,7 @@ class Cliente(threading.Thread):
             try:
                 # Se crea el socket para conectarse al bot
                 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                servidor_bot.connect((IP.HOST_BOT, IP.PORT_BOT))
+                servidor_bot.connect(("3.145.36.163", 8002))
                 # Se envia el mensaje al BotAI
                 mensaje = {"tipo": "Activar_bot"}
                 servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
@@ -958,11 +958,11 @@ lock = threading.Lock()
 
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind((IP.HOST_SERVER, IP.PORT_SERVER))
+servidor.bind(("172.31.9.104", 8001))
 servidor.listen(10)
 
 # Se imprime el mensaje en el servidor
-print(f"[SERVIDOR INICIADO ({IP.HOST_SERVER}:{IP.PORT_SERVER})]")
+print(f"[SERVIDOR INICIADO (172.31.9.104:{IP.PORT_SERVER})]")
 
 # Se inicializan las variables globales
 id_broadcast = 0 # Identificador de los mensajes broadcast
