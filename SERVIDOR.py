@@ -100,7 +100,7 @@ class Cliente(threading.Thread):
             for i in range(len(solicitudes)):
                 solicitudes[i] += '}'
             # Procesar la primera solicitud
-            solicitud = solicitudes[0]
+            solicitud = solicitudes[-1]
             # Se traduce el archivo json
             informacion = json.loads(solicitud)
             self.procesar_solicitud(informacion)
@@ -434,7 +434,7 @@ class Cliente(threading.Thread):
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
         elif self.fichas[ficha] != "Carcel":
             print("[SOLUCIONANDO ERROR]: Ficha no esta en la carcel")
-            for ficha_carcel, posicion in self.fichas.items():
+            for ficha_carcel, posicion in reversed(list(self.fichas.items())):
                 if posicion == "Carcel":
                     ficha = ficha_carcel
                     break
