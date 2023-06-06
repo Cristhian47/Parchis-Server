@@ -104,13 +104,7 @@ class Cliente(threading.Thread):
         }
 
         # Se obtiene el tipo de solicitud
-        try:
-            solicitud = informacion["tipo"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
-            self.enviar_respuesta(respuesta)
-            return
-        
+        solicitud = informacion["tipo"]
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
             solicitudes_lobby[solicitud](informacion)
@@ -163,13 +157,8 @@ class Cliente(threading.Thread):
     # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
     def procesar_seleccion_color(self, informacion):
         # Se extraen los argumentos
-        try:
-            nombre = informacion["nombre"]
-            color = informacion["color"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
-            self.enviar_respuesta(respuesta)
-            return
+        nombre = informacion["nombre"]
+        color = informacion["color"]
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -219,13 +208,8 @@ class Cliente(threading.Thread):
         global ultimos_dados, registro_dados, pares_seguidos, solicitud_esperada
 
         # Se extraen los argumentos
-        try:
-            D1 = informacion["dados"]["D1"]
-            D2 = informacion["dados"]["D2"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
-            self.enviar_respuesta(respuesta)
-            return
+        D1 = informacion["dados"]["D1"]
+        D2 = informacion["dados"]["D2"]
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -316,12 +300,7 @@ class Cliente(threading.Thread):
         global solicitud_esperada, estado_partida, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
-        try:
-            ficha = informacion["ficha"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
-            self.enviar_respuesta(respuesta)
-            return
+        ficha = informacion["ficha"]
 
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -382,12 +361,7 @@ class Cliente(threading.Thread):
         global solicitud_esperada, ultima_ficha
 
         # Se extraen los argumentos
-        try:
-            ficha = informacion["ficha"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
-            self.enviar_respuesta(respuesta)
-            return
+        ficha = informacion["ficha"]
 
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -422,12 +396,7 @@ class Cliente(threading.Thread):
         global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
-        try:
-            ficha = informacion["ficha"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
-            self.enviar_respuesta(respuesta)
-            return
+        ficha = informacion["ficha"]
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -527,7 +496,7 @@ class Cliente(threading.Thread):
     # Funcion que comprueba si todas la fichas estan en la carcel
     def comprobar_carcel(self):
         for ficha, posicion in self.fichas.items():
-            if posicion != "Carcel":
+            if posicion != "Carcel" and posicion != "Meta":
                 return False
         return True
 
@@ -546,11 +515,8 @@ class Cliente(threading.Thread):
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
-        try:
-            respuesta = json.dumps(informacion)
-            self.connection.sendall(respuesta.encode('utf-8'))
-        except:
-            print("No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
+        respuesta = json.dumps(informacion)
+        self.connection.sendall(respuesta.encode('utf-8'))
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
