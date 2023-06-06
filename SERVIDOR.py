@@ -100,7 +100,7 @@ class Cliente(threading.Thread):
             for i in range(len(solicitudes)):
                 solicitudes[i] += '}'
             # Procesar la primera solicitud
-            solicitud = solicitudes[0]
+            solicitud = solicitudes[-1]
             # Se traduce el archivo json
             informacion = json.loads(solicitud)
             self.procesar_solicitud(informacion)
@@ -146,7 +146,20 @@ class Cliente(threading.Thread):
                 # Se verifica que la solicitud sea la esperada
                 if solicitud == solicitud_esperada:
                     # Se ejecuta la accion correspondiente
+                    lock.acquire()
+                    # Se imprime el inicio de ejecucion
+                    if self.color == "":
+                        print(f"[{self.address}]: Ejecutando solicitud")
+                    else: 
+                        print(f"[{self.address}, {self.color}]: Ejecutando solicitud")
+                    # Se ejecuta la accion correspondiente
                     solicitudes_juego[solicitud](informacion)
+                    # Se imprime el fin de ejecucion
+                    if self.color == "":
+                        print(f"[{self.address}]: Solicitud ejecutada")
+                    else: 
+                        print(f"[{self.address}, {self.color}]: Solicitud ejecutada")
+                    lock.release()
                 else:
                     print(f"[DENEGADO]: Solicitud no esperada") 
                     respuesta = {"tipo": "denegado", "razon": "no es la solicitud esperada"}
@@ -434,7 +447,7 @@ class Cliente(threading.Thread):
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
         elif self.fichas[ficha] != "Carcel":
             print("[SOLUCIONANDO ERROR]: Ficha no esta en la carcel")
-            for ficha_carcel, posicion in self.fichas.items():
+            for ficha_carcel, posicion in reversed(list(self.fichas.items())):
                 if posicion == "Carcel":
                     ficha = ficha_carcel
                     break
