@@ -156,13 +156,8 @@ class Cliente(threading.Thread):
     # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
     def procesar_seleccion_color(self, informacion):
         # Se extraen los argumentos
-        try:
-            nombre = informacion["nombre"]
-            color = informacion["color"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
-            self.enviar_respuesta(respuesta)
-            return
+        nombre = informacion["nombre"]
+        color = informacion["color"]
         
         # Se valida la congruencia de los argumentos
         respuesta = None
