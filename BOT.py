@@ -200,7 +200,9 @@ class BOT(threading.Thread):
             self.d2 = None
         else:
             self.lanzar_dados()
-            print(f"({self.nombre}): Lanzando dados")
+            print(f"({self.nombre}): lanzando dados")
+            if self.d1 == self.d2:
+                self.contador_pares += 1
         
         
     #Funcion para sumar los dados a mi poscion
