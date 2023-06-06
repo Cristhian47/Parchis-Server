@@ -10,7 +10,7 @@ id_mensaje = 1
 
 # Conectarse al servidor
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect((IP.HOST_SERVER, IP.PORT_SERVER))
+cliente.connect(("3.17.187.70", 8001))
 
 #Funcion para el hilo de cliente
 def receive_messages():
