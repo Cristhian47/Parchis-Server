@@ -65,12 +65,6 @@ class BOT(threading.Thread):
             elif informacion['tipo'] == "desconexion":
                 print(informacion)
             elif informacion['tipo'] == "finalizar":
-                self.iniciar_partida = False
-                self.color = None
-                self.nombre = None
-                self.contador_pares = 0
-                self.d1 = None
-                self.d2 = None
                 print(informacion)
         
     #Funcion para lanzar los dados
@@ -284,8 +278,6 @@ class BOT(threading.Thread):
                     self.cola_mensajes.put(data)
             except:
                 print(f"{self.nombre} desconectado")
-                # Se termina la conexion
-                self.bot.close()
                 # Se elimina el jugador y se cierra la conexion e hilo
                 self.cerrar_conexion()
                 break
