@@ -5,6 +5,7 @@ import time
 import random
 import IP
 from queue import Queue
+import queue
 
 #Bots iniciaados para funcionar
 list_bots = []
@@ -202,7 +203,7 @@ class BOT(threading.Thread):
             self.lanzar_dados()
             print(f"({self.nombre}): lanzando dados")
             if self.d1 == self.d2:
-                self.contador_pares += 1
+                self.contador_pares += 1    
         
         
     #Funcion para sumar los dados a mi poscion
@@ -302,13 +303,34 @@ class BOT(threading.Thread):
                 else:
                     self.procesar_informacion(data)
 
-while True:
-    connection, address = servidor_bot.accept()
-    informacion = connection.recv(1024).decode('utf-8')
-    informacion = json.loads(informacion)
-    if informacion["tipo"] == "Activar_bot":
-        bot = BOT()
-        bot.start()
-        list_bots.append(bot)
-        print(f"Bot activado")
-        print("Cantidad de bots activos: ", len(list_bots))
+message_queue = queue.Queue()
+
+def handle_message():
+    while True:
+        informacion = message_queue.get()
+        informacion = json.loads(informacion)
+        if informacion["tipo"] == "Activar_bot":
+            bot = BOT()
+            bot.start()
+            list_bots.append(bot)
+            print(f"Bot activado")
+            print("Cantidad de bots activos: ", len(list_bots))
+        # Agrega aquí más lógica para manejar diferentes tipos de mensajes
+        message_queue.task_done()
+
+def message_handler():
+    while True:
+        connection, address = servidor_bot.accept()
+        informacion = connection.recv(1024).decode('utf-8')
+        message_queue.put(informacion)
+
+# Crear un hilo para manejar los mensajes encolados de forma asíncrona
+handler_thread = threading.Thread(target=handle_message)
+handler_thread.start()
+
+# Crear un conjunto de hilos para procesar los mensajes en la cola
+NUM_THREADS = 4  # Puedes ajustar la cantidad de hilos según tus necesidades
+for _ in range(NUM_THREADS):
+    worker_thread = threading.Thread(target=message_handler)
+    worker_thread.start()
+
