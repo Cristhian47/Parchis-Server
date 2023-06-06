@@ -162,10 +162,10 @@ class BOT(threading.Thread):
                                     if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                         posicion_fichas_mias.append([self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
                                                                     mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias])
-                                    else:
-                                        dados_usados = True
-                                        self.mover_ficha(fichas_mias)
-                                        break
+                                else:
+                                    dados_usados = True
+                                    self.mover_ficha(fichas_mias)
+                                    break
                     if dados_usados == False:
                         for posicion_mia in posicion_fichas_mias:
                             if posicion_mia[1] >= 63:
