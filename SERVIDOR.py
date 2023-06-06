@@ -103,13 +103,7 @@ class Cliente(threading.Thread):
         }
 
         # Se obtiene el tipo de solicitud
-        try:
-            solicitud = informacion["tipo"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
-            self.enviar_respuesta(respuesta)
-            return
-        
+        solicitud = informacion["tipo"]
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
             solicitudes_lobby[solicitud](informacion)
