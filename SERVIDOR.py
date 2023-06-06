@@ -527,7 +527,7 @@ class Cliente(threading.Thread):
     # Funcion que comprueba si todas la fichas estan en la carcel
     def comprobar_carcel(self):
         for ficha, posicion in self.fichas.items():
-            if posicion != "Carcel" and posicion != "Meta":
+            if posicion != "Carcel":
                 return False
         return True
 
