@@ -158,7 +158,7 @@ class BOT(threading.Thread):
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
                             for fichas_mias in mi_juego['fichas'].keys():
-                                if rivales['contadores_fichas'][fichas_rivales] < 63:
+                                if mi_juego['contadores_fichas'][fichas_mias] < 63:
                                     if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                         posicion_fichas_mias.append([self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
                                                                     mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias])
