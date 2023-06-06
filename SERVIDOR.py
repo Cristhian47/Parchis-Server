@@ -138,28 +138,24 @@ class Cliente(threading.Thread):
         
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
-            lock.acquire()
             # Se imprime el inicio de ejecucion
             print(f"[{self.address}]: Ejecutando solicitud")
             # Se ejecuta la accion correspondiente
             solicitudes_lobby[solicitud](informacion)
             # Se imprime el fin de ejecucion
             print(f"[{self.address}]: Solicitud ejecutada")
-            lock.release()
         # Si el estado de la partida es juego o turnos se ejecuta una accion
         elif solicitud in solicitudes_juego and (estado_partida == "turnos" or estado_partida == "juego"):
             # Se verifica que sea el turno del jugador
             if self.color == turno_actual:
                 # Se verifica que la solicitud sea la esperada
                 if solicitud == solicitud_esperada:
-                    lock.acquire()
                     # Se imprime el inicio de ejecucion
                     print(f"[{self.address}, {self.color}]: Ejecutando solicitud")
                     # Se ejecuta la accion correspondiente
                     solicitudes_juego[solicitud](informacion)
                     # Se imprime el fin de ejecucion
                     print(f"[{self.address}, {self.color}]: Solicitud ejecutada")
-                    lock.release()
                 else:
                     print(f"[DENEGADO]: Solicitud no esperada") 
                     respuesta = {"tipo": "denegado", "razon": "no es la solicitud esperada"}
@@ -837,7 +833,7 @@ def mayor_suma(registro_dados):
 # Funcion que actualiza el turno
 def siguiente_turno():
     # Se importan las variables globales
-    global turno_actual, ultimo_turno
+    global turno_actual, ultimo_turno, orden_turnos
     # Se actualiza el ultimo turno
     ultimo_turno = turno_actual
     # Se obtiene el índice del siguiente color
@@ -868,9 +864,7 @@ def ordenar_turnos(inicio):
 # Funcion que define el orden de los turnos 
 def definir_turnos():
     # Se importan las variables globales
-    global orden_turnos
-    global registro_dados
-    global estado_partida
+    global orden_turnos, registro_dados, estado_partida
     # Se busca el jugador con el valor maximo
     primer_lugar = mayor_suma(registro_dados)
     # Si hay un jugador con el valor maximo, se asignan los turnos a su derecha
@@ -891,7 +885,7 @@ def definir_turnos():
         print(f"[EMPATE DE TURNOS ({orden_turnos})]")
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
-        # Se actualiza el turno
+        # Se actualiza el turn
         siguiente_turno()
         # Se envia la informacion de la partida actualizada a todos los clientes
         mensaje = informacion_partida()
