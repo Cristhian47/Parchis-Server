@@ -53,6 +53,7 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
+import time
 import IP
 
 # Clase para manejar a los clientes
@@ -139,7 +140,7 @@ class Cliente(threading.Thread):
 
     # El cliente añade un bot {"tipo": "solicitud_bot"}
     def procesar_solicitud_bot(self, informacion):
-       # Se valida la congruencia de los argumentos
+        # Se valida la congruencia de los argumentos
         respuesta = None
         if len(hilos_clientes) > 3:
             respuesta = {"tipo": "denegado", "razon": "maximo de jugadores alcanzado"}
@@ -672,9 +673,7 @@ class Cliente(threading.Thread):
                     print("Desconexión (1) por:", (self.ip, self.puerto))
                     # Se termina la conexion
                     if estado_partida != "finalizada" and self in hilos_clientes:
-                        lock.acquire()
                         self.cerrar_conexion()
-                        lock.release()
                     # Se termina el hilo
                     break
             except:
@@ -682,9 +681,7 @@ class Cliente(threading.Thread):
                 print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
                 if estado_partida != "finalizada" and self in hilos_clientes:
-                        lock.acquire()
-                        self.cerrar_conexion()
-                        lock.release()
+                    self.cerrar_conexion()
                 # Se termina el hilo
                 print("Hilo terminado: ", (self.ip, self.puerto))
                 break
@@ -698,8 +695,7 @@ def broadcast(mensaje):
             id_broadcast += 1
             mensaje["id_broadcast"] = id_broadcast
     for client in hilos_clientes:
-        client.enviar_respuesta(mensaje)
- 
+        client.enviar_respuesta(mensaje) 
 
 # Funcion que comprueba si se puede iniciar la partida
 def iniciar_partida():
