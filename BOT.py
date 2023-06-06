@@ -77,6 +77,7 @@ class BOT(threading.Thread):
     #Funcion para determinar que hacer con los dados
     def determinar_movimiento(self, informacion_jugadores):
         contador_carcel = 0
+        dados_usados = False
         #Determinar si todas las fichas estan en la carcel
         for mi_juego in informacion_jugadores['jugadores']:
             if mi_juego['nombre'] == self.nombre:
@@ -86,7 +87,6 @@ class BOT(threading.Thread):
         
         if contador_carcel != 4 or self.d1 == self.d2:
             print(f"({self.nombre}): Entrando a determinar movimiento")
-            dados_usados = False
             #Determinar cuantos pares llevo y si son 3 coronar una ficha
             menor_recorrido = 1000
             if self.contador_pares == 3:
@@ -163,9 +163,10 @@ class BOT(threading.Thread):
                                         posicion_fichas_mias.append([self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
                                                                     mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias])
                                 else:
-                                    dados_usados = True
-                                    self.mover_ficha(fichas_mias)
-                                    break
+                                    if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
+                                        dados_usados = True
+                                        self.mover_ficha(fichas_mias)
+                                        break
                     if dados_usados == False:
                         for posicion_mia in posicion_fichas_mias:
                             if posicion_mia[1] >= 63:
