@@ -304,6 +304,7 @@ class BOT(threading.Thread):
 while True:
     for bot in list_bots:
         if bot.desconexion == True:
+            print("Removiendo bot")
             bot.join()
             list_bots.remove(bot)
     connection, address = servidor_bot.accept()
@@ -313,4 +314,4 @@ while True:
         bot = BOT()
         bot.start()
         list_bots.append(bot)
-        print(f"Bot {len(list_bots)} activado")
+        print(f"Bot activado")
