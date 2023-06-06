@@ -262,6 +262,7 @@ class BOT(threading.Thread):
                 for index in data.keys():
                     if data[index] == True:
                         self.color = index
+                        break
                 self.nombre = "Bot_" + self.color
                 solicitud = {"tipo": "seleccion_color", "nombre": self.nombre, "color": self.color}
                 self.enviar_respuesta(solicitud)
@@ -278,12 +279,11 @@ class BOT(threading.Thread):
         # Ciclo para recibir mensajes
         while True:
             try:
-                data = self.bot.recv(1024).decode('utf-8')
+                data = self.bot.recv(4096).decode('utf-8')
                 if data:
                     data = json.loads(data)
                     self.cola_mensajes.put(data)
             except:
-                self.cerrar_conexion()
                 break
 
     # Funcion para procesar la informacion recibida
