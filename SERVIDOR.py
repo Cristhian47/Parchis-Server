@@ -53,7 +53,6 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
-import time
 import IP
 
 # Clase para manejar a los clientes
@@ -700,8 +699,7 @@ def broadcast(mensaje):
             mensaje["id_broadcast"] = id_broadcast
     for client in hilos_clientes:
         client.enviar_respuesta(mensaje)
-    # Esperar 0.1 segundos para evitar que se junten los mensajes
-    time.sleep(0.1)    
+ 
 
 # Funcion que comprueba si se puede iniciar la partida
 def iniciar_partida():
