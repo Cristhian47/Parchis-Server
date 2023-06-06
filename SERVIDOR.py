@@ -545,11 +545,8 @@ class Cliente(threading.Thread):
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
-        try:
-            respuesta = json.dumps(informacion)
-            self.connection.sendall(respuesta.encode('utf-8'))
-        except:
-            print("No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
+        respuesta = json.dumps(informacion)
+        self.connection.sendall(respuesta.encode('utf-8'))
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
