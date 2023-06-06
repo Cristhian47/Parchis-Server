@@ -529,7 +529,7 @@ class Cliente(threading.Thread):
         hilos_clientes.remove(self)
 
         # Se envia el mensaje a todos los clientes
-        mensaje = {"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
+        mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
         broadcast(mensaje)
 
         if estado_partida == "lobby":
@@ -602,7 +602,7 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 ganador = hilos_clientes[0]
-                mensaje = {"tipo": "finalizar", "ganador": ganador.color}
+                mensaje = ({"tipo": "finalizar", "ganador": ganador.color})
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + ganador.color + " ha ganado la partida")
@@ -839,7 +839,7 @@ def recibir_clientes():
             # Se imprime el mensaje en el servidor
             print("Conexión establecida por:", address)
             # Se envia el mensaje a todos los clientes
-            mensaje = {"tipo": "conexion", "cliente": address}
+            mensaje = ({"tipo": "conexion", "cliente": address})
             broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
@@ -847,9 +847,6 @@ def recibir_clientes():
             hilos_clientes.append(thread)
             # Inicia el hilo
             thread.start()
-
-# Crear un objeto de bloqueo
-lock = threading.Lock()
 
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
