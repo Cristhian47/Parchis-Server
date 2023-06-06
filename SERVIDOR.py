@@ -836,10 +836,18 @@ def siguiente_turno():
     global turno_actual, ultimo_turno, orden_turnos
     # Se actualiza el ultimo turno
     ultimo_turno = turno_actual
-    # Se obtiene el índice del siguiente color
-    indice_siguiente = (orden_turnos.index(turno_actual) + 1) % len(orden_turnos)
-    # Se actualiza el turno actual
-    turno_actual = orden_turnos[indice_siguiente]
+
+    # Se valida si el turno actual es el ultimo
+    if turno_actual in orden_turnos:
+        # Se obtiene el indice del turno actual
+        indice_actual = orden_turnos.index(turno_actual)
+        # Se obtiene el indice del siguiente turno
+        indice_siguiente = (indice_actual + 1) % len(orden_turnos)
+        # Se actualiza el turno actual
+        turno_actual = orden_turnos[indice_siguiente]
+    else:
+        # Se actualiza el turno actual
+        turno_actual = orden_turnos[0]
 
 # Funcion que asigna los turnos para pasar a la derecha (Green->Red->Yellow->Blue->Green...)
 def ordenar_turnos(inicio):
@@ -880,7 +888,10 @@ def definir_turnos():
     # Si hay un empate con el valor maximo, se debe hacer un desempate
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
+        print(primer_lugar)
+        print(orden_turnos)
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
+        print(orden_turnos)
         # Se imprime el mensaje en el servidor
         print(f"[EMPATE DE TURNOS ({orden_turnos})]")
         # Se limpia el registro de lanzamientos
