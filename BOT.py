@@ -158,20 +158,24 @@ class BOT(threading.Thread):
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
                             for fichas_mias in mi_juego['fichas'].keys():
-                                if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
-                                    posicion_fichas_mias.append([self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
-                                                                mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias])
-                                    
-                    print(posicion_fichas_mias)
-                    for posicion_mia in posicion_fichas_mias:
-                        if posicion_mia[1] >= 63:
-                            dados_usados = True
-                            self.mover_ficha(posicion_mia[2])
-                            break
-                        elif posicion_mia[0] in self.seguras:
-                            dados_usados = True
-                            self.mover_ficha(posicion_mia[2])
-                            break
+                                if rivales['contadores_fichas'][fichas_rivales] < 63:
+                                    if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
+                                        posicion_fichas_mias.append([self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
+                                                                    mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias])
+                                    else:
+                                        dados_usados = True
+                                        self.mover_ficha(fichas_mias)
+                                        break
+                    if dados_usados == False:
+                        for posicion_mia in posicion_fichas_mias:
+                            if posicion_mia[1] >= 63:
+                                dados_usados = True
+                                self.mover_ficha(posicion_mia[2])
+                                break
+                            elif posicion_mia[0] in self.seguras:
+                                dados_usados = True
+                                self.mover_ficha(posicion_mia[2])
+                                break
                 if dados_usados == False:
                     fichas_posibles = []
                     print(f"({self.nombre}): No se que hacer, movere aleatoriamente")
