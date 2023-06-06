@@ -275,6 +275,7 @@ class BOT(threading.Thread):
                     data = json.loads(data)
                     self.cola_mensajes.put(data)
             except:
+                self.bot.close()
                 print(f"{self.nombre} desconectado")
                 break
 
