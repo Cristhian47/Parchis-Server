@@ -53,6 +53,7 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
+import time
 import IP
 
 # Clase para manejar a los clientes
@@ -82,7 +83,10 @@ class Cliente(threading.Thread):
             }
 
     # Que es lo que viene en el mensaje
-    def procesar_informacion(self, mensaje):  
+    def procesar_informacion(self, mensaje):
+        # Se imprime el mensaje recibido
+        print(f"({self.color}): {mensaje}")
+
         # Se traduce el archivo json 
         informacion = json.loads(mensaje)
 
@@ -106,6 +110,7 @@ class Cliente(threading.Thread):
         try:
             solicitud = informacion["tipo"]
         except:
+            print("(Denegado): No se especifico el tipo de solicitud")
             respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
             self.enviar_respuesta(respuesta)
             return
@@ -156,6 +161,7 @@ class Cliente(threading.Thread):
                 mensaje = {"tipo": "Activar_bot"}
                 servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
             except:
+                print("(Denegado): No se pudo conectar con el bot")
                 respuesta = {"tipo": "denegado", "razon": "no se pudo conectar con el bot"}
                 self.enviar_respuesta(respuesta)
 
@@ -166,6 +172,7 @@ class Cliente(threading.Thread):
             nombre = informacion["nombre"]
             color = informacion["color"]
         except:
+            print("(Denegado): No se especifico el nombre o el color")
             respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
             self.enviar_respuesta(respuesta)
             return
@@ -188,8 +195,6 @@ class Cliente(threading.Thread):
             colores_disponibles[color] = False
             self.nombre = nombre
             self.color = color
-            # Se imprime la informacion del cliente
-            print("Seleccion de color: ", (nombre, color))
             # Se envia la informacion de la partida actualizada a todos los clientes
             mensaje = informacion_partida()
             broadcast(mensaje)
@@ -207,8 +212,6 @@ class Cliente(threading.Thread):
         else:
             # Se marca al cliente como listo para iniciar la partida
             self.iniciar_partida = True
-            # Se imprime la informacion del cliente
-            print("Solicitud de iniciar partida: ", (self.nombre, self.color))
             # Se comprueba si se puede iniciar la partida
             iniciar_partida()
 
@@ -222,6 +225,7 @@ class Cliente(threading.Thread):
             D1 = informacion["dados"]["D1"]
             D2 = informacion["dados"]["D2"]
         except:
+            print("(Denegado): No se especifico los dados")
             respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
             self.enviar_respuesta(respuesta)
             return
@@ -323,6 +327,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
+            print("(Denegado): No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -389,6 +394,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
+            print("(Denegado): No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -429,6 +435,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
+            print("(Denegado): No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -554,7 +561,7 @@ class Cliente(threading.Thread):
             respuesta = json.dumps(informacion)
             self.connection.sendall(respuesta.encode('utf-8'))
         except:
-            print("No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
+            print("(Error): No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
