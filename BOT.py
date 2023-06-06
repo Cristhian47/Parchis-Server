@@ -26,6 +26,7 @@ class BOT(threading.Thread):
         self.color = None
         self.d1 = None
         self.d2 = None
+        self.desconexion = False
     #Activamos la conexion con el servidor principal
     def activar_conexion(self):
         self.bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,7 +66,6 @@ class BOT(threading.Thread):
                 print(informacion)
             elif informacion['tipo'] == "finalizar":
                 self.bot.close()
-                print(informacion)
         
     #Funcion para lanzar los dados
     def lanzar_dados(self):
@@ -277,6 +277,7 @@ class BOT(threading.Thread):
                     self.cola_mensajes.put(data)
             except:
                 self.bot.close()
+                self.desconexion = True
                 print(f"{self.nombre} desconectado")
                 break
 
@@ -302,7 +303,8 @@ class BOT(threading.Thread):
 
 while True:
     for bot in list_bots:
-        if not bot.is_alive():
+        if bot.desconexion == True:
+            bot.join()
             list_bots.remove(bot)
     connection, address = servidor_bot.accept()
     informacion = connection.recv(1024).decode('utf-8')
