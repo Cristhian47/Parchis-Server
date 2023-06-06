@@ -65,6 +65,14 @@ class BOT(threading.Thread):
             elif informacion['tipo'] == "desconexion":
                 print(informacion)
             elif informacion['tipo'] == "finalizar":
+                self.iniciar_partida = False
+                self.color = None
+                self.nombre = None
+                self.contador_pares = 0
+                self.d1 = None
+                self.d2 = None
+                self.cerrar_conexion()
+                self.bot.close()
                 print(informacion)
         
     #Funcion para lanzar los dados
