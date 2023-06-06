@@ -15,8 +15,8 @@ RESPUESTAS DE SALIDA
 {"tipo": "denegado", "razon": "mensaje"}
 
 BROADCAST DE SALIDA
-{"tipo": "conexion", "cliente": (self.ip, self.puerto)}
-{"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
+{"tipo": "conexion", "cliente": self.address}
+{"tipo": "desconexion", "cliente": self.address}
 {"tipo": "finalizar", "ganador": "Red"}
 {   
     "turno_actual" : "Red",
@@ -62,7 +62,7 @@ class Cliente(threading.Thread):
         super(Cliente, self).__init__()
         # Atributos de la conexion
         self.connection = connection
-        self.ip, self.puerto = address
+        self.address = address
         # Atributos para la partida
         self.iniciar_partida = False
         self.turnos = 2
@@ -85,7 +85,10 @@ class Cliente(threading.Thread):
     # Que es lo que viene en el mensaje
     def procesar_informacion(self, mensaje):
         # Se imprime el mensaje recibido
-        print(f"({self.color}): {mensaje}")
+        if self.color == "":
+            print(f"[{self.address}]: {mensaje}")
+        else: 
+            print(f"[{self.address}, {self.color}]: {mensaje}")
 
         # Se traduce el archivo json 
         informacion = json.loads(mensaje)
@@ -110,7 +113,7 @@ class Cliente(threading.Thread):
         try:
             solicitud = informacion["tipo"]
         except:
-            print("(Denegado): No se especifico el tipo de solicitud")
+            print("[DENEGADO]: No se especifico el tipo de solicitud")
             respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
             self.enviar_respuesta(respuesta)
             return
@@ -161,7 +164,7 @@ class Cliente(threading.Thread):
                 mensaje = {"tipo": "Activar_bot"}
                 servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
             except:
-                print("(Denegado): No se pudo conectar con el bot")
+                print("[DENEGADO]: No se pudo conectar con el bot")
                 respuesta = {"tipo": "denegado", "razon": "no se pudo conectar con el bot"}
                 self.enviar_respuesta(respuesta)
 
@@ -172,7 +175,7 @@ class Cliente(threading.Thread):
             nombre = informacion["nombre"]
             color = informacion["color"]
         except:
-            print("(Denegado): No se especifico el nombre o el color")
+            print("[DENEGADO]: No se especifico el nombre o el color")
             respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
             self.enviar_respuesta(respuesta)
             return
@@ -225,7 +228,7 @@ class Cliente(threading.Thread):
             D1 = informacion["dados"]["D1"]
             D2 = informacion["dados"]["D2"]
         except:
-            print("(Denegado): No se especifico los dados")
+            print("[DENEGADO]: No se especifico los dados")
             respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
             self.enviar_respuesta(respuesta)
             return
@@ -327,7 +330,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
-            print("(Denegado): No se especifico la ficha")
+            print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -394,7 +397,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
-            print("(Denegado): No se especifico la ficha")
+            print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -435,7 +438,7 @@ class Cliente(threading.Thread):
         try:
             ficha = informacion["ficha"]
         except:
-            print("(Denegado): No se especifico la ficha")
+            print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
@@ -561,7 +564,7 @@ class Cliente(threading.Thread):
             respuesta = json.dumps(informacion)
             self.connection.sendall(respuesta.encode('utf-8'))
         except:
-            print("(Error): No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
+            print(f"(ERROR): No se pudo enviar la respuesta al cliente {self.address} con el mensaje ({informacion})")
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
@@ -575,7 +578,7 @@ class Cliente(threading.Thread):
         hilos_clientes.remove(self)
 
         # Se envia el mensaje a todos los clientes
-        mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
+        mensaje = {"tipo": "desconexion", "cliente": self.address}
         broadcast(mensaje)
 
         if estado_partida == "lobby":
@@ -648,7 +651,7 @@ class Cliente(threading.Thread):
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
                 ganador = hilos_clientes[0]
-                mensaje = ({"tipo": "finalizar", "ganador": ganador.color})
+                mensaje = {"tipo": "finalizar", "ganador": ganador.color}
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + ganador.color + " ha ganado la partida")
@@ -681,24 +684,31 @@ class Cliente(threading.Thread):
                     self.procesar_informacion(mensaje)
                 else:
                     # Se imprime el mensaje en el servidor
-                    print("Desconexión (1) por:", (self.ip, self.puerto))
+                    if self.color == "":
+                        print(f"[{self.address}]: Desconexión tipo (1)")
+                    else: 
+                        print(f"[{self.address}, {self.color}]: Desconexión tipo (1)")
                     # Se termina la conexion
                     if estado_partida != "finalizada" and self in hilos_clientes:
                         lock.acquire()
                         self.cerrar_conexion()
                         lock.release()
                     # Se termina el hilo
+                    print("Hilo terminado: ", self.address)
                     break
             except:
                 # Se imprime el mensaje en el servidor
-                print("Desconexión (2) por:", (self.ip, self.puerto))
+                if self.color == "":
+                    print(f"[{self.address}]: Desconexión tipo (2)")
+                else: 
+                    print(f"[{self.address}, {self.color}]: Desconexión tipo (2)")
                 # Se termina la conexion
                 if estado_partida != "finalizada" and self in hilos_clientes:
                     lock.acquire()
                     self.cerrar_conexion()
                     lock.release()
                 # Se termina el hilo
-                print("Hilo terminado: ", (self.ip, self.puerto))
+                print("Hilo terminado: ", self.address)
                 break
 
 # Funcion para enviar un mensaje a todos los clientes
@@ -885,14 +895,14 @@ def recibir_clientes():
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
             # Se imprime el mensaje en el servidor
-            print(f"Conexión rechazada por: {address}, razón: {respuesta}")
+            print(f"({address}): Conexión rechazada por ({respuesta})")
             connection.sendall(respuesta.encode('utf-8'))
             connection.close()
         else:
             # Se imprime el mensaje en el servidor
-            print("Conexión establecida por:", address)
+            print(f"[{address}]: Conexión establecida")
             # Se envia el mensaje a todos los clientes
-            mensaje = ({"tipo": "conexion", "cliente": address})
+            mensaje = {"tipo": "conexion", "cliente": address}
             broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
