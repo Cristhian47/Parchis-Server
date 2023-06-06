@@ -245,11 +245,11 @@ class BOT(threading.Thread):
         self.activar_conexion()
         while True:
             solicitud = {"tipo": "solicitud_color"}
-            while True:
+            while self.nombre == None:
                 self.enviar_respuesta(solicitud)
                 data = self.bot.recv(1024)
+                print(data)
                 if 'Yellow' in data.decode('utf-8'):
-                    data = json.loads(data.decode('utf-8'))
                     break
             #Determinar que llegue la informacion correcta
             if 'Yellow' in data.keys():
