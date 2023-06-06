@@ -419,11 +419,7 @@ class Cliente(threading.Thread):
 
         # Se extraen los argumentos
         try:
-            for ficha_carcel, posicion in self.fichas.items():
-                if posicion == "Carcel":
-                    ficha = ficha_carcel
-                    break
-            #ficha = informacion["ficha"]
+            ficha = informacion["ficha"]
         except:
             print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
@@ -435,7 +431,11 @@ class Cliente(threading.Thread):
         if ficha not in self.fichas:
             respuesta = {"tipo": "denegado", "razon": "ficha no valida"}
         elif self.fichas[ficha] != "Carcel":
-            respuesta = {"tipo": "denegado", "razon": "ficha no esta en la carcel"}
+            print("[SOLUCIONANDO ERROR]: Ficha no esta en la carcel")
+            for ficha_carcel, posicion in self.fichas.items():
+                if posicion == "Carcel":
+                    ficha = ficha_carcel
+                    break
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
