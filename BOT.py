@@ -265,8 +265,6 @@ class BOT(threading.Thread):
                 self.nombre = "Bot_" + self.color
                 solicitud = {"tipo": "seleccion_color", "nombre": self.nombre, "color": self.color}
                 self.enviar_respuesta(solicitud)
-                data = self.bot.recv(4096)
-                data = json.loads(data.decode('utf-8'))
                 break
 
         #Cola de mensajes
