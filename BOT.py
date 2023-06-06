@@ -248,9 +248,6 @@ class BOT(threading.Thread):
             while self.nombre == None:
                 self.enviar_respuesta(solicitud)
                 data = self.bot.recv(1024)
-                print(data)
-                if 'Yellow' in data.decode('utf-8'):
-                    break
             #Determinar que llegue la informacion correcta
             if 'Yellow' in data.keys():
                 for index in data.keys():
