@@ -26,7 +26,6 @@ class BOT(threading.Thread):
         self.color = None
         self.d1 = None
         self.d2 = None
-
     #Activamos la conexion con el servidor principal
     def activar_conexion(self):
         self.bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -277,8 +276,6 @@ class BOT(threading.Thread):
                     self.cola_mensajes.put(data)
             except:
                 print(f"{self.nombre} desconectado")
-                # Se elimina el jugador y se cierra la conexion e hilo
-                self.cerrar_conexion()
                 break
 
     # Funcion para procesar la informacion recibida
@@ -302,6 +299,10 @@ class BOT(threading.Thread):
                     self.procesar_informacion(data)
 
 while True:
+    for bot in list_bots:
+        if not bot.is_alive():
+            list_bots.remove(bot)
+            print("Cantidad de bots activos: ", len(list_bots))
     connection, address = servidor_bot.accept()
     informacion = connection.recv(1024).decode('utf-8')
     informacion = json.loads(informacion)
