@@ -90,9 +90,31 @@ class Cliente(threading.Thread):
         else: 
             print(f"[{self.address}, {self.color}]: {mensaje}")
 
-        # Se traduce el archivo json 
-        informacion = json.loads(mensaje)
+        # Dividir el mensaje en solicitudes individuales
+        solicitudes = mensaje.split("}")
+        # Eliminar el último elemento de la lista, ya que no contiene un grupo completo
+        solicitudes.pop()
+        # Agregar las llaves de cierre a cada grupo, excepto al último
+        for i in range(len(solicitudes)-1):
+            solicitudes[i] += '}'
 
+        if len(solicitudes) > 1:
+            # Hay múltiples solicitudes en el mensaje
+            for solicitud in solicitudes:
+                # Agregar nuevamente el "}" al final de cada solicitud
+                solicitud = solicitud.strip()
+                # Se traduce el archivo json
+                informacion = json.loads(solicitud)
+                self.procesar_solicitud(informacion)
+                break
+        else:
+            # Solo hay una solicitud en el mensaje
+            solicitud = mensaje.strip()
+            # Se traduce el archivo json
+            informacion = json.loads(solicitud)
+            self.procesar_solicitud(informacion)
+
+    def procesar_solicitud(self, informacion):
         # Diccionario para manejar las solicitudes esperadas en lobby
         solicitudes_lobby = {
             "solicitud_color": self.procesar_solicitud_color,
