@@ -90,31 +90,9 @@ class Cliente(threading.Thread):
         else: 
             print(f"[{self.address}, {self.color}]: {mensaje}")
 
-        # Dividir el mensaje en solicitudes individuales
-        solicitudes = mensaje.split("}")
-        # Eliminar el último elemento de la lista, ya que no contiene un grupo completo
-        solicitudes.pop()
-        # Agregar las llaves de cierre a cada grupo, excepto al último
-        for i in range(len(solicitudes)-1):
-            solicitudes[i] += '}'
+        # Se traduce el archivo json 
+        informacion = json.loads(mensaje)
 
-        if len(solicitudes) > 1:
-            # Hay múltiples solicitudes en el mensaje
-            for solicitud in solicitudes:
-                # Agregar nuevamente el "}" al final de cada solicitud
-                solicitud = solicitud.strip()
-                # Se traduce el archivo json
-                informacion = json.loads(solicitud)
-                self.procesar_solicitud(informacion)
-                break
-        else:
-            # Solo hay una solicitud en el mensaje
-            solicitud = mensaje.strip()
-            # Se traduce el archivo json
-            informacion = json.loads(solicitud)
-            self.procesar_solicitud(informacion)
-
-    def procesar_solicitud(self, informacion):
         # Diccionario para manejar las solicitudes esperadas en lobby
         solicitudes_lobby = {
             "solicitud_color": self.procesar_solicitud_color,
@@ -135,7 +113,6 @@ class Cliente(threading.Thread):
         try:
             solicitud = informacion["tipo"]
         except:
-            print("[DENEGADO]: No se especifico el tipo de solicitud")
             respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
             self.enviar_respuesta(respuesta)
             return
@@ -417,7 +394,11 @@ class Cliente(threading.Thread):
 
         # Se extraen los argumentos
         try:
-            ficha = informacion["ficha"]
+            for ficha_carcel, posicion in self.fichas.items():
+                if posicion == "Carcel":
+                    ficha = ficha_carcel
+                    break
+            #ficha = informacion["ficha"]
         except:
             print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
