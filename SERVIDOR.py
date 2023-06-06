@@ -54,7 +54,6 @@ import socket
 import threading
 import json
 import time
-import IP
 
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
@@ -970,7 +969,7 @@ servidor.bind(("172.31.9.104", 8001))
 servidor.listen(10)
 
 # Se imprime el mensaje en el servidor
-print(f"[SERVIDOR INICIADO (172.31.9.104:{IP.PORT_SERVER})]")
+print(f"[SERVIDOR INICIADO (172.31.9.104:{8001})]")
 
 # Se inicializan las variables globales
 id_broadcast = 0 # Identificador de los mensajes broadcast

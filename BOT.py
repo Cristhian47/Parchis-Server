@@ -3,7 +3,6 @@ import threading
 import json
 import time
 import random
-import IP
 from queue import Queue
 import queue
 
