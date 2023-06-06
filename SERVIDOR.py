@@ -99,12 +99,11 @@ class Cliente(threading.Thread):
             # Agregar las llaves de cierre a cada grupo, excepto al último
             for i in range(len(solicitudes)):
                 solicitudes[i] += '}'
-            # Procesar cada solicitud
-            for solicitud in solicitudes:
-                # Se traduce el archivo json
-                informacion = json.loads(solicitud)
-                self.procesar_solicitud(informacion)
-                break
+            # Procesar la primera solicitud
+            solicitud = solicitudes[0]
+            # Se traduce el archivo json
+            informacion = json.loads(solicitud)
+            self.procesar_solicitud(informacion)
 
         # Solo hay una solicitud en el mensaje
         else:
@@ -148,13 +147,16 @@ class Cliente(threading.Thread):
                 if solicitud == solicitud_esperada:
                     # Se ejecuta la accion correspondiente
                     solicitudes_juego[solicitud](informacion)
-                else: 
+                else:
+                    print(f"[DENEGADO]: Solicitud no esperada") 
                     respuesta = {"tipo": "denegado", "razon": "no es la solicitud esperada"}
                     self.enviar_respuesta(respuesta) 
             else:
+                print(f"[DENEGADO]: No es tu turno")
                 respuesta = {"tipo": "denegado", "razon": "no es tu turno"}
                 self.enviar_respuesta(respuesta)
         else:
+            print(f"[DENEGADO]: Solicitud no valida")
             respuesta = {"tipo": "denegado", "razon": "solicitud no valida"}
             self.enviar_respuesta(respuesta)
 
@@ -436,6 +438,7 @@ class Cliente(threading.Thread):
                 if posicion == "Carcel":
                     ficha = ficha_carcel
                     break
+            print("[ERROR SOLUCIONADO]: Ficha " + ficha + " seleccionada")
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
