@@ -970,10 +970,10 @@ print(f"[SERVIDOR INICIADO (172.31.9.104:{8001})]")
 
 # Se crea el socket para conectarse al bot
 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor_bot.connect(("3.145.36.163", 8002))
+servidor_bot.connect(("3.145.99.214", 8002))
 
 # Se imprime el mensaje en el servidor
-print(f"[CONEXION AL BOT INICIADA (3.145.36.163: {8002})]")
+print(f"[CONEXION AL BOT INICIADA (3.145.99.214: {8002})]")
 
 # Se inicializan las variables globales
 id_broadcast = 0 # Identificador de los mensajes broadcast
