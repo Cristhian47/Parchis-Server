@@ -39,6 +39,7 @@ class BOT(threading.Thread):
             elif informacion['tipo'] == "desconexion":
                 print(informacion)
             elif informacion['tipo'] == "finalizar":
+                print(f"{self.nombre} desconectado")
                 self.cerrar_conexion()
 
         elif 'turno_actual' in informacion.keys():
@@ -115,15 +116,18 @@ class BOT(threading.Thread):
                 #Determinar que movimiento es mejor, comer, mover, coronar, quedar en seguro 
                 suma_dados = self.d1 + self.d2
                 if dados_usados == False:
+                    Contador_fichas_coronadas = 0
                     #Determinar si puedo coronar una ficha
                     print(f"({self.nombre}): Estoy pensando en coronar moviendo ficha")
                     for mi_juego in informacion_jugadores['jugadores']:
                         if mi_juego['nombre'] == self.nombre:
                             for fichas_mias in mi_juego['contadores_fichas'].keys():
-                                if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
+                                if mi_juego['fichas'][fichas_mias] == 'Meta':
+                                    Contador_fichas_coronadas += 1
+                                elif mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                     if mi_juego['contadores_fichas'][fichas_mias] + suma_dados >= 71:
-                                        self.mover_ficha(fichas_mias)
                                         dados_usados = True
+                                        self.mover_ficha(fichas_mias)
                                         break
                 if dados_usados == False:
                     #Determinar si puedo comer una ficha
@@ -274,7 +278,6 @@ class BOT(threading.Thread):
                     data = json.loads(data)
                     self.cola_mensajes.put(data)
             except:
-                print(f"{self.nombre} desconectado")
                 break
 
     # Funcion para procesar la informacion recibida
