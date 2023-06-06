@@ -395,12 +395,15 @@ class Cliente(threading.Thread):
 
         # Se extraen los argumentos
         try:
+            print("0")
             ficha = informacion["ficha"]
         except:
             print("[DENEGADO]: No se especifico la ficha")
             respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
             self.enviar_respuesta(respuesta)
             return
+
+        print("1")
 
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -409,10 +412,14 @@ class Cliente(threading.Thread):
         elif self.fichas[ficha] != "Carcel":
             respuesta = {"tipo": "denegado", "razon": "ficha no esta en la carcel"}
 
+        print("2")
+
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print("3")
             self.enviar_respuesta(respuesta)
         else:
+            print("4")
             # Se actualiza el ultimo movimiento
             ultima_ficha = ficha
             # Se actualiza la posicion de la ficha
