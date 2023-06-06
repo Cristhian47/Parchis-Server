@@ -135,15 +135,16 @@ class BOT(threading.Thread):
                         if mi_juego['nombre'] == self.nombre:
                             for fichas_mias in mi_juego['fichas'].keys():
                                 if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
-                                    posicion_fichas_mias.append((self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
-                                                                mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias))
+                                    if mi_juego['contadores_fichas'][fichas_mias] + suma_dados < 63:
+                                        posicion_fichas_mias.append((self.sumar_dados(self.casillas, mi_juego['fichas'][fichas_mias], suma_dados),
+                                                                    mi_juego['contadores_fichas'][fichas_mias] + suma_dados , fichas_mias))
 
                     for rivales in  informacion_jugadores['jugadores']:
                         if rivales['nombre'] != self.nombre:
                             for fichas_rivales in rivales['fichas'].keys():
                                 posicion_rival = rivales['fichas'][fichas_rivales]
                                 if rivales['contadores_fichas'][fichas_rivales] < 63:
-                                    if posicion_rival != 'Carcel' and posicion_rival != 'Meta':
+                                    if posicion_rival != 'Carcel' and posicion_rival != 'Meta'and posicion_rival not in self.casillas_seguras:
                                         for posicion_mia in posicion_fichas_mias:
                                             if posicion_mia[1] < 63:
                                                 if posicion_mia[0] == posicion_rival:
