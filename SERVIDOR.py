@@ -207,13 +207,8 @@ class Cliente(threading.Thread):
         global ultimos_dados, registro_dados, pares_seguidos, solicitud_esperada
 
         # Se extraen los argumentos
-        try:
-            D1 = informacion["dados"]["D1"]
-            D2 = informacion["dados"]["D2"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
-            self.enviar_respuesta(respuesta)
-            return
+        D1 = informacion["dados"]["D1"]
+        D2 = informacion["dados"]["D2"]
         
         # Se valida la congruencia de los argumentos
         respuesta = None
