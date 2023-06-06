@@ -49,7 +49,7 @@ class BOT(threading.Thread):
                     dado_2 = informacion['ultimos_dados']['D2']
                     if dado_1 != self.d1 and dado_2 != self.d2:
                         self.lanzar_dados()
-                        print(f"({self.nombre}): anzando dados")
+                        print(f"({self.nombre}): Lanzando dados")
                         if self.d1 == self.d2:
                             self.contador_pares += 1
                     elif dado_1 == self.d1 and dado_2 == self.d2:   

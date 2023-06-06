@@ -540,19 +540,22 @@ class Cliente(threading.Thread):
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
-        respuesta = json.dumps(informacion)
-        self.connection.sendall(respuesta.encode('utf-8'))
+        try:
+            respuesta = json.dumps(informacion)
+            self.connection.sendall(respuesta.encode('utf-8'))
+        except:
+            pass
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
         # Variables globales
         global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada, pares_seguidos, turno_actual
 
-        # Se termina la conexion
-        self.connection.close()
-
         # Se elimina el cliente de la lista de hilos
         hilos_clientes.remove(self)
+
+        # Se termina la conexion
+        self.connection.close()
 
         # Se envia el mensaje a todos los clientes
         mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
@@ -660,7 +663,9 @@ class Cliente(threading.Thread):
                     print("Desconexión (1) por:", (self.ip, self.puerto))
                     # Se termina la conexion
                     if estado_partida != "finalizada" and self in hilos_clientes:
+                        lock.acquire()
                         self.cerrar_conexion()
+                        lock.release()
                     # Se termina el hilo
                     break
             except:
@@ -668,7 +673,9 @@ class Cliente(threading.Thread):
                 print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
                 if estado_partida != "finalizada" and self in hilos_clientes:
+                    lock.acquire()
                     self.cerrar_conexion()
+                    lock.release()
                 # Se termina el hilo
                 break
         print("Hilo terminado: ", (self.ip, self.puerto))
@@ -676,8 +683,6 @@ class Cliente(threading.Thread):
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
     global id_broadcast
-    # Se bloquea el acceso
-    lock.acquire()
     # Se agrega el ID al broadcast
     if "id_broadcast" in mensaje:
         if mensaje["estado_partida"] != "lobby":
@@ -687,11 +692,6 @@ def broadcast(mensaje):
         client.enviar_respuesta(mensaje)
     # Esperar 0.1 segundos para evitar que se junten los mensajes
     time.sleep(0.1)    
-    # Se libera el bloqueo
-    lock.release()
-
-# Crear un objeto de bloqueo
-lock = threading.Lock()
 
 # Funcion que comprueba si se puede iniciar la partida
 def iniciar_partida():
@@ -878,6 +878,9 @@ def recibir_clientes():
             hilos_clientes.append(thread)
             # Inicia el hilo
             thread.start()
+
+# Crear un objeto de bloqueo
+lock = threading.Lock()
 
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
