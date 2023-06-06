@@ -146,7 +146,20 @@ class Cliente(threading.Thread):
                 # Se verifica que la solicitud sea la esperada
                 if solicitud == solicitud_esperada:
                     # Se ejecuta la accion correspondiente
+                    lock.acquire()
+                    # Se imprime el inicio de ejecucion
+                    if self.color == "":
+                        print(f"[{self.address}]: Ejecutando solicitud")
+                    else: 
+                        print(f"[{self.address}, {self.color}]: Ejecutando solicitud")
+                    # Se ejecuta la accion correspondiente
                     solicitudes_juego[solicitud](informacion)
+                    # Se imprime el fin de ejecucion
+                    if self.color == "":
+                        print(f"[{self.address}]: Solicitud ejecutada")
+                    else: 
+                        print(f"[{self.address}, {self.color}]: Solicitud ejecutada")
+                    lock.release()
                 else:
                     print(f"[DENEGADO]: Solicitud no esperada") 
                     respuesta = {"tipo": "denegado", "razon": "no es la solicitud esperada"}
