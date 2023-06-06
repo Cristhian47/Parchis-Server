@@ -393,6 +393,8 @@ class Cliente(threading.Thread):
             self.contadores_fichas[ficha] = 71
             # Se comprueba si todas las fichas estan en la meta
             if self.comprobar_meta():
+                # Se imprime el mensaje en el servidor
+                print(f"[SERVIDOR: EL JUGADOR {self.color} HA GANADO LA PARTIDA]")
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
                 # Se actualiza la solicitud esperada
@@ -405,8 +407,6 @@ class Cliente(threading.Thread):
                 # Se envia el mensaje a todos los clientes
                 mensaje = {"tipo": "finalizar", "ganador": self.color}
                 broadcast(mensaje)
-                # Se imprime el mensaje en el servidor
-                print("El jugador " + self.color + " ha ganado la partida")
                 # Se elimina de la lista de hilos
                 hilos_clientes.remove(self)
                 # Se cierran las conexiones de los clientes
@@ -542,6 +542,8 @@ class Cliente(threading.Thread):
 
             # Se comprueba si todas las fichas estan en la meta
             if self.comprobar_meta():
+                # Se imprime el mensaje en el servidor
+                print(f"[SERVIDOR: EL JUGADOR {self.color} HA GANADO LA PARTIDA]")
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
                 # Se actualiza la solicitud esperada
@@ -554,8 +556,6 @@ class Cliente(threading.Thread):
                 # Se envia el mensaje a todos los clientes
                 mensaje = {"tipo": "finalizar", "ganador": self.color}
                 broadcast(mensaje)
-                # Se imprime el mensaje en el servidor
-                print("El jugador " + self.color + " ha ganado la partida")
                 # Se elimina de la lista de hilos
                 hilos_clientes.remove(self)
                 # Se cierran las conexiones de los clientes
@@ -639,6 +639,9 @@ class Cliente(threading.Thread):
             
         elif estado_partida == "turnos":
             if len(hilos_clientes) < 2:
+                ganador = hilos_clientes[0]
+                # Se imprime el mensaje en el servidor
+                print(f"[SERVIDOR: EL JUGADOR {ganador.color} HA GANADO LA PARTIDA]")
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
                 # Se actualiza la solicitud esperada
@@ -649,11 +652,8 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                ganador = hilos_clientes[0]
                 mensaje = {"tipo": "finalizar", "ganador": ganador.color}
                 broadcast(mensaje)
-                # Se imprime el mensaje en el servidor
-                print("El jugador " + ganador.color + " ha ganado la partida")
                 # Se cierra la conexion del ultimo cliente
                 ganador.connection.close()
                 # Se añade el hilo a la lista de hilos
@@ -686,6 +686,9 @@ class Cliente(threading.Thread):
 
         elif estado_partida == "juego":
             if len(hilos_clientes) < 2:
+                ganador = hilos_clientes[0]
+                # Se imprime el mensaje en el servidor
+                print(f"[SERVIDOR: EL JUGADOR {ganador.color} HA GANADO LA PARTIDA]")
                 # Se actualiza el estado de la partida
                 estado_partida = "finalizada"
                 # Se actualiza la solicitud esperada
@@ -696,11 +699,8 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                ganador = hilos_clientes[0]
                 mensaje = {"tipo": "finalizar", "ganador": ganador.color}
                 broadcast(mensaje)
-                # Se imprime el mensaje en el servidor
-                print("El jugador " + ganador.color + " ha ganado la partida")
                 # Se cierra la conexion del ultimo cliente
                 ganador.connection.close()
                 # Se añade el hilo a la lista de hilos
@@ -740,7 +740,7 @@ class Cliente(threading.Thread):
                         self.cerrar_conexion()
                         lock.release()
                     # Se termina el hilo
-                    print("Hilo terminado: ", self.address)
+                    print(f"[{self.address}]: Hilo terminado")
                     break
             except:
                 # Se imprime el mensaje en el servidor
@@ -754,7 +754,7 @@ class Cliente(threading.Thread):
                     self.cerrar_conexion()
                     lock.release()
                 # Se termina el hilo
-                print("Hilo terminado: ", self.address)
+                print(f"[{self.address}]: Hilo terminado")
                 break
 
 # Funcion para enviar un mensaje a todos los clientes
@@ -783,6 +783,9 @@ def iniciar_partida():
             if cliente.iniciar_partida == True:
                 aprobaciones += 1
         if aprobaciones == len(hilos_clientes):
+            # Se imprime el mensaje en el servidor
+            print("[PARTIDA INICIADA]")
+            # Se actualiza el estado de la partida
             estado_partida = "turnos"
             solicitud_esperada = "lanzar_dados"
             # Se selecciona el primer turno
@@ -792,8 +795,6 @@ def iniciar_partida():
             # Se envia la informacion de la partida actualizada a todos los clientes
             mensaje = informacion_partida()
             broadcast(mensaje)
-            # Se imprime el mensaje en el servidor
-            print("Partida iniciada")
 
 # Funcion que retorna la informacion de la partida
 def informacion_partida():
@@ -874,19 +875,20 @@ def definir_turnos():
     primer_lugar = mayor_suma(registro_dados)
     # Si hay un jugador con el valor maximo, se asignan los turnos a su derecha
     if len(primer_lugar) == 1:
+        # Se imprime el mensaje en el servidor
+        print(f"[TURNOS DEFINIDOS ({primer_lugar[0]})]")
+        # Se ordenan los turnos a partir del jugador con el valor maximo
         ordenar_turnos(primer_lugar[0])
         estado_partida = "juego"
         # Se envia la informacion de la partida actualizada a todos los clientes
         mensaje = informacion_partida()
         broadcast(mensaje)
-        # Se imprime el mensaje en el servidor
-        print("Turnos definidos: ", primer_lugar[0])
     # Si hay un empate con el valor maximo, se debe hacer un desempate
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
         # Se imprime el mensaje en el servidor
-        print("Empate de turnos: ", orden_turnos)
+        print(f"[EMPATE DE TURNOS ({orden_turnos})]")
         # Se limpia el registro de lanzamientos
         registro_dados.clear()
         # Se actualiza el turno
@@ -907,7 +909,7 @@ def reiniciar_partida():
                 cliente.join()
 
             # Se imprime el mensaje en el servidor
-            print("Partida finalizada")
+            print("[PARTIDA FINALIZADA]")
 
             # Se inicializan las variables globales para el proximo juego
             id_broadcast = 0 # Identificador de los mensajes broadcast
@@ -924,7 +926,7 @@ def reiniciar_partida():
             estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego)
 
             # Se imprime el mensaje en el servidor
-            print("Partida reiniciada")
+            print("[PARTIDA REINICIADA]")
 
 # Funcion que actua como receptor de clientes (se ejecuta en un hilo)
 def recibir_clientes():
@@ -966,7 +968,7 @@ servidor.bind((IP.HOST_SERVER, IP.PORT_SERVER))
 servidor.listen(10)
 
 # Se imprime el mensaje en el servidor
-print(f"Servidor esperando conexiones en {IP.HOST_SERVER}:{IP.PORT_SERVER}...")
+print(f"[SERVIDOR INICIADO ({IP.HOST_SERVER}:{IP.PORT_SERVER})]")
 
 # Se inicializan las variables globales
 id_broadcast = 0 # Identificador de los mensajes broadcast
@@ -1004,5 +1006,5 @@ thread2.join()
 servidor.close()
 
 # Se imprime el mensaje en el servidor
-print("Servidor finalizado")
+print("[SERVIDOR FINALIZADO]")
 
