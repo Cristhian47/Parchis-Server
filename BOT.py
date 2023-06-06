@@ -34,7 +34,10 @@ class BOT(threading.Thread):
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, informacion):
-        if 'tipo' in informacion.keys():
+        if informacion == "Rechazado: La partida ya inició.":
+            self.cerrar_conexion()
+
+        elif 'tipo' in informacion.keys():
             if informacion['tipo'] == "conexion":
                 print(informacion)
             elif informacion['tipo'] == "desconexion":
@@ -45,7 +48,10 @@ class BOT(threading.Thread):
 
         elif 'turno_actual' in informacion.keys():
             if informacion['estado_partida'] == "lobby":
-                pass
+                if self.iniciar_partida == False:
+                    informacion = {"tipo": "solicitud_iniciar_partida"}
+                    self.iniciar_partida = True
+                    self.enviar_respuesta(informacion)
             elif informacion['estado_partida'] == "turnos":
                 if informacion['turno_actual'] == self.color:
                     self.lanzar_dados()
@@ -243,7 +249,7 @@ class BOT(threading.Thread):
     # Funcion que se ejecuta cuando se inicia el hilo
     def run(self):
         self.activar_conexion()
-        while True:
+        while self.nombre == None:
             solicitud = {"tipo": "solicitud_color"}
             self.enviar_respuesta(solicitud)
             data = self.bot.recv(4096)
@@ -256,17 +262,12 @@ class BOT(threading.Thread):
                 for index in data.keys():
                     if data[index] == True:
                         self.color = index
-                        break
                 self.nombre = "Bot_" + self.color
                 solicitud = {"tipo": "seleccion_color", "nombre": self.nombre, "color": self.color}
                 self.enviar_respuesta(solicitud)
-                data = self.bot.recv(1024)
+                data = self.bot.recv(4096)
                 data = json.loads(data.decode('utf-8'))
-                print(data)
-                if 'turno_actual' in data.keys():
-                    informacion = {"tipo": "solicitud_iniciar_partida"}
-                    self.enviar_respuesta(informacion)
-                    break
+                break
 
         #Cola de mensajes
         self.cola_mensajes = Queue()
@@ -284,6 +285,7 @@ class BOT(threading.Thread):
                     data = json.loads(data)
                     self.cola_mensajes.put(data)
             except:
+                self.cerrar_conexion()
                 break
 
     # Funcion para procesar la informacion recibida
