@@ -71,8 +71,6 @@ class BOT(threading.Thread):
                 self.contador_pares = 0
                 self.d1 = None
                 self.d2 = None
-                self.cerrar_conexion()
-                self.bot.close()
                 print(informacion)
         
     #Funcion para lanzar los dados
