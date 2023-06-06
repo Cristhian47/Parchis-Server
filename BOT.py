@@ -309,3 +309,4 @@ while True:
         bot.start()
         list_bots.append(bot)
         print(f"Bot activado")
+        print("Cantidad de bots activos: ", len(list_bots))
