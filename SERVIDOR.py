@@ -90,9 +90,29 @@ class Cliente(threading.Thread):
         else: 
             print(f"[{self.address}, {self.color}]: {mensaje}")
 
-        # Se traduce el archivo json 
-        informacion = json.loads(mensaje)
+        # Hay múltiples solicitudes en el mensaje
+        if "}{" in mensaje:
+            # Dividir el mensaje en solicitudes individuales
+            solicitudes = mensaje.split("}")
+            # Eliminar el último elemento de la lista, ya que no contiene un grupo completo
+            solicitudes.pop()
+            # Agregar las llaves de cierre a cada grupo, excepto al último
+            for i in range(len(solicitudes)):
+                solicitudes[i] += '}'
+            # Procesar cada solicitud
+            for solicitud in solicitudes:
+                # Se traduce el archivo json
+                informacion = json.loads(solicitud)
+                self.procesar_solicitud(informacion)
+                break
 
+        # Solo hay una solicitud en el mensaje
+        else:
+            # Se traduce el archivo json
+            informacion = json.loads(mensaje)
+            self.procesar_solicitud(informacion)
+
+    def procesar_solicitud(self, informacion):
         # Diccionario para manejar las solicitudes esperadas en lobby
         solicitudes_lobby = {
             "solicitud_color": self.procesar_solicitud_color,
@@ -153,6 +173,7 @@ class Cliente(threading.Thread):
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             try:
@@ -192,6 +213,7 @@ class Cliente(threading.Thread):
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             colores_disponibles[color] = False
@@ -210,6 +232,7 @@ class Cliente(threading.Thread):
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             # Se marca al cliente como listo para iniciar la partida
@@ -239,6 +262,7 @@ class Cliente(threading.Thread):
         
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             # El estado de la partida es definir turnos
@@ -343,6 +367,7 @@ class Cliente(threading.Thread):
         
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             # Se actualiza el ultimo movimiento
@@ -414,6 +439,7 @@ class Cliente(threading.Thread):
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             # Se actualiza el ultimo movimiento
@@ -457,6 +483,7 @@ class Cliente(threading.Thread):
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
+            print(f"[DENEGADO]: {respuesta['razon']}")
             self.enviar_respuesta(respuesta)
         else:
             # Se actualiza el ultimo movimiento
