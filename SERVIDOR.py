@@ -888,10 +888,7 @@ def definir_turnos():
     # Si hay un empate con el valor maximo, se debe hacer un desempate
     else:
         # Se reasignan los turnos para que solo lancen los jugadores del empate
-        print(primer_lugar)
-        print(orden_turnos)
         orden_turnos = [color for color in orden_turnos if color in primer_lugar]
-        print(orden_turnos)
         # Se imprime el mensaje en el servidor
         print(f"[EMPATE DE TURNOS ({orden_turnos})]")
         # Se limpia el registro de lanzamientos
