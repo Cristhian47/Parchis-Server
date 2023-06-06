@@ -243,8 +243,7 @@ class BOT(threading.Thread):
     
     # Funcion para cerrar la conexion
     def cerrar_conexion(self):
-        global list_bots
-        list_bots.remove(self)
+        mensaje_cerrar_hilo(self)
 
     # Funcion que se ejecuta cuando se inicia el hilo
     def run(self):
@@ -306,6 +305,27 @@ class BOT(threading.Thread):
                 else:
                     self.procesar_informacion(data)
 
+#Cola para peticiones de cerrar hilo}
+cola_cerrar_hilo = Queue()
+
+#Funcion para agregar una terminacion de hilo a la cola
+def mensaje_cerrar_hilo(bot):
+    cola_cerrar_hilo.put(bot)
+
+# Funcion que termina hilos
+def cerrar_conexion(): 
+    while True:
+        bot = cola_cerrar_hilo.get()
+        if bot != None:
+            for index in list_bots:
+                if index == bot:
+                    list_bots.remove(index)
+        cola_cerrar_hilo.task_done()
+
+cerrar_conexion_hilo = threading.Thread(target=cerrar_conexion)
+cerrar_conexion_hilo.start()
+
+#Cola para recibir mensajes
 message_queue = queue.Queue()
 
 def handle_message():
