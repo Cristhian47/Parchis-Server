@@ -53,6 +53,7 @@ BROADCAST DE SALIDA
 import socket
 import threading
 import json
+import time
 import IP
 
 # Clase para manejar a los clientes
@@ -103,7 +104,13 @@ class Cliente(threading.Thread):
         }
 
         # Se obtiene el tipo de solicitud
-        solicitud = informacion["tipo"]
+        try:
+            solicitud = informacion["tipo"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico el tipo de solicitud"}
+            self.enviar_respuesta(respuesta)
+            return
+        
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
             solicitudes_lobby[solicitud](informacion)
@@ -156,8 +163,13 @@ class Cliente(threading.Thread):
     # El cliente se asigna un nombre y selecciona un color {"tipo": "seleccion_color", "nombre": "Johan", "color": "Blue"}
     def procesar_seleccion_color(self, informacion):
         # Se extraen los argumentos
-        nombre = informacion["nombre"]
-        color = informacion["color"]
+        try:
+            nombre = informacion["nombre"]
+            color = informacion["color"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico el nombre o el color"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -207,8 +219,13 @@ class Cliente(threading.Thread):
         global ultimos_dados, registro_dados, pares_seguidos, solicitud_esperada
 
         # Se extraen los argumentos
-        D1 = informacion["dados"]["D1"]
-        D2 = informacion["dados"]["D2"]
+        try:
+            D1 = informacion["dados"]["D1"]
+            D2 = informacion["dados"]["D2"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico los dados"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -299,8 +316,13 @@ class Cliente(threading.Thread):
         global solicitud_esperada, estado_partida, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
-        
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
+
         # Se valida la congruencia de los argumentos
         respuesta = None
         if ficha not in self.fichas:
@@ -360,7 +382,12 @@ class Cliente(threading.Thread):
         global solicitud_esperada, ultima_ficha
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
 
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -395,7 +422,12 @@ class Cliente(threading.Thread):
         global estado_partida, hilos_clientes, solicitud_esperada, turno_actual, hilos_clientes, ultima_ficha
 
         # Se extraen los argumentos
-        ficha = informacion["ficha"]
+        try:
+            ficha = informacion["ficha"]
+        except:
+            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
+            self.enviar_respuesta(respuesta)
+            return
         
         # Se valida la congruencia de los argumentos
         respuesta = None
@@ -495,7 +527,7 @@ class Cliente(threading.Thread):
     # Funcion que comprueba si todas la fichas estan en la carcel
     def comprobar_carcel(self):
         for ficha, posicion in self.fichas.items():
-            if posicion != "Carcel":
+            if posicion != "Carcel" and posicion != "Meta":
                 return False
         return True
 
@@ -514,8 +546,11 @@ class Cliente(threading.Thread):
 
     # Funcion para enviar una respuesta al cliente
     def enviar_respuesta(self, informacion):
-        respuesta = json.dumps(informacion)
-        self.connection.sendall(respuesta.encode('utf-8'))
+        try:
+            respuesta = json.dumps(informacion)
+            self.connection.sendall(respuesta.encode('utf-8'))
+        except:
+            print("No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
@@ -637,17 +672,22 @@ class Cliente(threading.Thread):
                     # Se imprime el mensaje en el servidor
                     print("Desconexión (1) por:", (self.ip, self.puerto))
                     # Se termina la conexion
-                    if estado_partida != "finalizada":
+                    if estado_partida != "finalizada" and self in hilos_clientes:
+                        lock.acquire()
                         self.cerrar_conexion()
+                        lock.release()
                     # Se termina el hilo
                     break
             except:
                 # Se imprime el mensaje en el servidor
                 print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
-                if estado_partida != "finalizada":
+                if estado_partida != "finalizada" and self in hilos_clientes:
+                    lock.acquire()
                     self.cerrar_conexion()
+                    lock.release()
                 # Se termina el hilo
+                print("Hilo terminado: ", (self.ip, self.puerto))
                 break
 
 # Funcion para enviar un mensaje a todos los clientes
@@ -660,6 +700,8 @@ def broadcast(mensaje):
             mensaje["id_broadcast"] = id_broadcast
     for client in hilos_clientes:
         client.enviar_respuesta(mensaje)
+    # Esperar 0.1 segundos para evitar que se junten los mensajes
+    time.sleep(0.1)    
 
 # Funcion que comprueba si se puede iniciar la partida
 def iniciar_partida():
@@ -848,6 +890,9 @@ def recibir_clientes():
             # Inicia el hilo
             thread.start()
 
+# Crear un objeto de bloqueo
+lock = threading.Lock()
+
 # Conectarse al servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((IP.HOST_SERVER, IP.PORT_SERVER))
@@ -893,4 +938,3 @@ servidor.close()
 
 # Se imprime el mensaje en el servidor
 print("Servidor finalizado")
-
