@@ -352,16 +352,19 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                mensaje = ({"tipo": "finalizar", "ganador": self.color})
+                mensaje = {"tipo": "finalizar", "ganador": self.color}
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
-                # Se termina la conexion (Se quita el control al jugador para usar su hilo para reiniciar la partida)
-                self.connection.close()
-                # Se elimina el cliente de la lista de hilos
+                # Se elimina de la lista de hilos
                 hilos_clientes.remove(self)
-                # Reiniciar la partida
-                reiniciar_partida()
+                # Se cierran las conexiones de los clientes
+                for cliente in hilos_clientes:
+                    cliente.connection.close()
+                # Se añade el hilo a la lista de hilos
+                hilos_clientes.append(self)
+                # Se termina la conexion
+                self.connection.close()
             else:
                 # Se actualiza los turnos
                 self.turnos = 0
@@ -489,16 +492,19 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                mensaje = ({"tipo": "finalizar", "ganador": self.color})
+                mensaje = {"tipo": "finalizar", "ganador": self.color}
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
                 print("El jugador " + self.color + " ha ganado la partida")
-                # Se termina la conexion (Se quita el control al jugador para usar su hilo para reiniciar la partida)
-                self.connection.close()
-                # Se elimina el cliente de la lista de hilos
+                # Se elimina de la lista de hilos
                 hilos_clientes.remove(self)
-                # Reiniciar la partida
-                reiniciar_partida()
+                # Se cierran las conexiones de los clientes
+                for cliente in hilos_clientes:
+                    cliente.connection.close()
+                # Se añade el hilo a la lista de hilos
+                hilos_clientes.append(self)
+                # Se termina la conexion
+                self.connection.close()
             else:
                 # Se actualiza los turnos
                 if self.turnos == 0:
@@ -544,21 +550,21 @@ class Cliente(threading.Thread):
             respuesta = json.dumps(informacion)
             self.connection.sendall(respuesta.encode('utf-8'))
         except:
-            pass
+            print("No se pudo enviar la respuesta al cliente", (self.ip, self.puerto), "con el mensaje", informacion)
 
     # Funcion para cerrar la conexion del cliente
     def cerrar_conexion(self):
         # Variables globales
         global hilos_clientes, estado_partida, orden_turnos, solicitud_esperada, pares_seguidos, turno_actual
 
-        # Se elimina el cliente de la lista de hilos
-        hilos_clientes.remove(self)
-
         # Se termina la conexion
         self.connection.close()
 
+        # Se elimina el cliente de la lista de hilos
+        hilos_clientes.remove(self)
+
         # Se envia el mensaje a todos los clientes
-        mensaje = ({"tipo": "desconexion", "cliente": (self.ip, self.puerto)})
+        mensaje = {"tipo": "desconexion", "cliente": (self.ip, self.puerto)}
         broadcast(mensaje)
 
         if estado_partida == "lobby":
@@ -583,13 +589,15 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                ganador = hilos_clientes[0].color
-                mensaje = ({"tipo": "finalizar", "ganador": ganador})
+                ganador = hilos_clientes[0]
+                mensaje = {"tipo": "finalizar", "ganador": ganador.color}
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
-                print("El jugador " + ganador + " ha ganado la partida")
-                # Reiniciar la partida
-                reiniciar_partida()
+                print("El jugador " + ganador.color + " ha ganado la partida")
+                # Se cierra la conexion del ultimo cliente
+                ganador.connection.close()
+                # Se añade el hilo a la lista de hilos
+                hilos_clientes.append(self)
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
@@ -628,13 +636,15 @@ class Cliente(threading.Thread):
                 mensaje = informacion_partida()
                 broadcast(mensaje)
                 # Se envia el mensaje a todos los clientes
-                ganador = hilos_clientes[0].color
-                mensaje = ({"tipo": "finalizar", "ganador": ganador})
+                ganador = hilos_clientes[0]
+                mensaje = {"tipo": "finalizar", "ganador": ganador.color}
                 broadcast(mensaje)
                 # Se imprime el mensaje en el servidor
-                print("El jugador " + ganador + " ha ganado la partida")
-                # Reiniciar la partida
-                reiniciar_partida()
+                print("El jugador " + ganador.color + " ha ganado la partida")
+                # Se cierra la conexion del ultimo cliente
+                ganador.connection.close()
+                # Se añade el hilo a la lista de hilos
+                hilos_clientes.append(self)
             else:
                 # Se comprueba si el cliente es el turno actual
                 if self.color == turno_actual:
@@ -673,13 +683,13 @@ class Cliente(threading.Thread):
                 print("Desconexión (2) por:", (self.ip, self.puerto))
                 # Se termina la conexion
                 if estado_partida != "finalizada" and self in hilos_clientes:
-                    lock.acquire()
-                    self.cerrar_conexion()
-                    lock.release()
+                        lock.acquire()
+                        self.cerrar_conexion()
+                        lock.release()
                 # Se termina el hilo
+                print("Hilo terminado: ", (self.ip, self.puerto))
                 break
-        print("Hilo terminado: ", (self.ip, self.puerto))
-
+        
 # Funcion para enviar un mensaje a todos los clientes
 def broadcast(mensaje):
     global id_broadcast
@@ -821,32 +831,33 @@ def definir_turnos():
 # Funcion que reinicia la partida (expulsa los jugadores y reinicia las variables)
 def reiniciar_partida():
     # Se importan las variables globales
-    global hilos_clientes, colores_disponibles, turno_actual, orden_turnos, estado_partida, solicitud_esperada, ultimos_dados, registro_dados, pares_seguidos
+    global id_broadcast, ultima_ficha, ultimo_turno, hilos_clientes, colores_disponibles, turno_actual, orden_turnos, estado_partida, solicitud_esperada, ultimos_dados, registro_dados, pares_seguidos
 
-    # Se imprime el mensaje en el servidor
-    print("Desconectando clientes: ", hilos_clientes)
+    while True:
+        if estado_partida == "finalizada":
+            # Se cierran los hilos de los clientes
+            for cliente in hilos_clientes:
+                cliente.join()
 
-    # Se cierran los sockets y lo hilos de los clientes
-    for cliente in hilos_clientes:
-        cliente.connection.close()
-        cliente.join()
+            # Se imprime el mensaje en el servidor
+            print("Partida finalizada")
 
-    # Se inicializan las variables globales para el proximo juego
-    id_broadcast = 0 # Identificador de los mensajes broadcast
-    hilos_clientes = [] # Hilos de los clientes
-    colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
-    turno_actual = "" # Color del jugador con el turno actual
-    orden_turnos = [] # Orden de los turnos en la partida
-    ultima_ficha = "" # Ultima ficha movida
-    ultimo_turno = "" # Color del jugador del ultimo turno
-    ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
-    registro_dados = {} # Registro de los dados lanzados en una ronda
-    pares_seguidos = 0 # Contador de los pares seguidos por un jugador
-    solicitud_esperada = "" # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
-    estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego)
+            # Se inicializan las variables globales para el proximo juego
+            id_broadcast = 0 # Identificador de los mensajes broadcast
+            hilos_clientes = [] # Hilos de los clientes
+            colores_disponibles = {"Yellow": True , "Blue": True, "Green": True, "Red": True} # Disponibilidad de los colores
+            turno_actual = "" # Color del jugador con el turno actual
+            orden_turnos = [] # Orden de los turnos en la partida
+            ultima_ficha = "" # Ultima ficha movida
+            ultimo_turno = "" # Color del jugador del ultimo turno
+            ultimos_dados = {"D1" : 0, "D2" : 0} # Valor de los dados de la ultima jugada (1-6)
+            registro_dados = {} # Registro de los dados lanzados en una ronda
+            pares_seguidos = 0 # Contador de los pares seguidos por un jugador
+            solicitud_esperada = "" # Indica la solicitud esperada de la ronda (lanzar_dados, sacar_ficha, mover_ficha)
+            estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, juego)
 
-    # Se imprime el mensaje en el servidor
-    print("Partida reiniciada")
+            # Se imprime el mensaje en el servidor
+            print("Partida reiniciada")
 
 # Funcion que actua como receptor de clientes (se ejecuta en un hilo)
 def recibir_clientes():
@@ -870,7 +881,7 @@ def recibir_clientes():
             # Se imprime el mensaje en el servidor
             print("Conexión establecida por:", address)
             # Se envia el mensaje a todos los clientes
-            mensaje = ({"tipo": "conexion", "cliente": address})
+            mensaje = {"tipo": "conexion", "cliente": address}
             broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
@@ -907,11 +918,20 @@ estado_partida = "lobby" # Indica el estado actual del juego (lobby, turnos, jue
 # Hilo que actua como receptor de clientes
 thread = threading.Thread(target=recibir_clientes)
 
+# Hilo que reinicia la partida
+thread2 = threading.Thread(target=reiniciar_partida)
+
 # Iniciar el hilo receptor de clientes
 thread.start()
 
+# Iniciar el hilo receptor de clientes
+thread2.start()
+
 # Esperar a que el hilo receptor de clientes finalice
 thread.join()
+
+# Esperar a que el hilo de reinicio de la partida finalice
+thread2.join()
 
 # Se cierra el socket del servidor
 servidor.close()
