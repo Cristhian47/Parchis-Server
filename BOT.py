@@ -186,10 +186,11 @@ class BOT(threading.Thread):
                             for fichas_mias in mi_juego['fichas'].keys():
                                 if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                     fichas_posibles.append(fichas_mias)
-                                    
-                    ficha_aleatoria = random.choice(fichas_posibles)
-                    dados_usados = True
-                    self.mover_ficha(ficha_aleatoria)
+
+                    if len(fichas_posibles) > 0:            
+                        ficha_aleatoria = random.choice(fichas_posibles)
+                        dados_usados = True
+                        self.mover_ficha(ficha_aleatoria)
             #Reinicializar los dados
             self.d1 = None
             self.d2 = None
