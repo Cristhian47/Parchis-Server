@@ -5,7 +5,7 @@ import time
 import random
 from queue import Queue
 import queue
-
+    
 #Bots iniciaados para funcionar
 list_bots = []
 
