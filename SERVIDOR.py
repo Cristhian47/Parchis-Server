@@ -138,27 +138,27 @@ class Cliente(threading.Thread):
         
         # Si el estado de la partida es lobby se ejecuta una accion
         if solicitud in solicitudes_lobby and estado_partida == "lobby":
+            lock.acquire()
+            # Se imprime el inicio de ejecucion
+            print(f"[{self.address}]: Ejecutando solicitud")
+            # Se ejecuta la accion correspondiente
             solicitudes_lobby[solicitud](informacion)
+            # Se imprime el fin de ejecucion
+            print(f"[{self.address}]: Solicitud ejecutada")
+            lock.release()
         # Si el estado de la partida es juego o turnos se ejecuta una accion
         elif solicitud in solicitudes_juego and (estado_partida == "turnos" or estado_partida == "juego"):
             # Se verifica que sea el turno del jugador
             if self.color == turno_actual:
                 # Se verifica que la solicitud sea la esperada
                 if solicitud == solicitud_esperada:
-                    # Se ejecuta la accion correspondiente
                     lock.acquire()
                     # Se imprime el inicio de ejecucion
-                    if self.color == "":
-                        print(f"[{self.address}]: Ejecutando solicitud")
-                    else: 
-                        print(f"[{self.address}, {self.color}]: Ejecutando solicitud")
+                    print(f"[{self.address}, {self.color}]: Ejecutando solicitud")
                     # Se ejecuta la accion correspondiente
                     solicitudes_juego[solicitud](informacion)
                     # Se imprime el fin de ejecucion
-                    if self.color == "":
-                        print(f"[{self.address}]: Solicitud ejecutada")
-                    else: 
-                        print(f"[{self.address}, {self.color}]: Solicitud ejecutada")
+                    print(f"[{self.address}, {self.color}]: Solicitud ejecutada")
                     lock.release()
                 else:
                     print(f"[DENEGADO]: Solicitud no esperada") 
