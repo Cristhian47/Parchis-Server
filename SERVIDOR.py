@@ -381,12 +381,7 @@ class Cliente(threading.Thread):
         global solicitud_esperada, ultima_ficha
 
         # Se extraen los argumentos
-        try:
-            ficha = informacion["ficha"]
-        except:
-            respuesta = {"tipo": "denegado", "razon": "no se especifico la ficha"}
-            self.enviar_respuesta(respuesta)
-            return
+        ficha = informacion["ficha"]
 
         # Se valida la congruencia de los argumentos
         respuesta = None
