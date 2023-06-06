@@ -302,7 +302,6 @@ while True:
     for bot in list_bots:
         if not bot.is_alive():
             list_bots.remove(bot)
-            print("Cantidad de bots activos: ", len(list_bots))
     connection, address = servidor_bot.accept()
     informacion = connection.recv(1024).decode('utf-8')
     informacion = json.loads(informacion)
@@ -310,5 +309,4 @@ while True:
         bot = BOT()
         bot.start()
         list_bots.append(bot)
-        print("Bot activado")
-        print("Cantidad de bots activos: ", len(list_bots))
+        print(f"Bot {len(list_bots)} activado")
