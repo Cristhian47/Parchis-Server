@@ -246,13 +246,11 @@ class BOT(threading.Thread):
         while True:
             solicitud = {"tipo": "solicitud_color"}
             self.enviar_respuesta(solicitud)
+            data = self.bot.recv(4096)
             try:
-                data = self.bot.recv(1024)
                 data = json.loads(data.decode('utf-8'))
-            except:
-                print(f"({self.nombre}): Se ha perdido la conexion con el servidor")
-                self.cerrar_conexion()
-                break
+            except json.JSONDecodeError as e:
+                print("Error al decodificar JSON:", str(e))
             #Determinar que llegue la informacion correcta
             if 'Yellow' in data.keys():
                 for index in data.keys():
