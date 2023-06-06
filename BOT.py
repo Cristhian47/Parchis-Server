@@ -245,25 +245,25 @@ class BOT(threading.Thread):
         self.activar_conexion()
         while True:
             solicitud = {"tipo": "solicitud_color"}
-            while self.nombre == None:
+            self.enviar_respuesta(solicitud)
+            data = self.bot.recv(1024)
+            data = json.loads(data.decode('utf-8'))
+            #Determinar que llegue la informacion correcta
+            if 'Yellow' in data.keys():
+                for index in data.keys():
+                    if data[index] == True:
+                        self.color = index
+                        break
+                self.nombre = "Bot_" + self.color
+                solicitud = {"tipo": "seleccion_color", "nombre": self.nombre, "color": self.color}
                 self.enviar_respuesta(solicitud)
                 data = self.bot.recv(1024)
-                #Determinar que llegue la informacion correcta
-                if 'Yellow' in data.keys():
-                    for index in data.keys():
-                        if data[index] == True:
-                            self.color = index
-                            break
-                    self.nombre = "Bot_" + self.color
-                    solicitud = {"tipo": "seleccion_color", "nombre": self.nombre, "color": self.color}
-                    self.enviar_respuesta(solicitud)
-                    data = self.bot.recv(1024)
-                    data = json.loads(data.decode('utf-8'))
-                    print(data)
-                    if 'turno_actual' in data.keys():
-                        informacion = {"tipo": "solicitud_iniciar_partida"}
-                        self.enviar_respuesta(informacion)
-                        break
+                data = json.loads(data.decode('utf-8'))
+                print(data)
+                if 'turno_actual' in data.keys():
+                    informacion = {"tipo": "solicitud_iniciar_partida"}
+                    self.enviar_respuesta(informacion)
+                    break
 
         #Cola de mensajes
         self.cola_mensajes = Queue()
