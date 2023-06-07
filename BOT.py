@@ -326,6 +326,14 @@ class BOT(threading.Thread):
                 else:
                     self.procesar_informacion(data)
 
+#Hilo que se encargue de borrar hilos que ya acabaron su ejecucion
+def borrar_hilos():
+    while True:
+        for index in list_bots:
+            if index.is_alive() == False:
+                list_bots.remove(index)
+                print(len(list_bots))
+
 #Cola para peticiones de cerrar hilo}
 cola_cerrar_hilo = Queue()
 
@@ -376,4 +384,11 @@ handler_thread.start()
 # Crear un conjunto de hilos para procesar los mensajes en la cola
 worker_thread = threading.Thread(target=message_handler)
 worker_thread.start()
+
+#Hilo para borrar hilos que ya acabaron su ejecucion
+borrar_hilos_hilo = threading.Thread(target=borrar_hilos)
+borrar_hilos_hilo.start()
+
+
+
 
