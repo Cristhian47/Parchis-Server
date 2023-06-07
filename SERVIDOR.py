@@ -1,52 +1,14 @@
 '''
-SERVIDOR PARQUES PROYECTO FINAL SISTEMAS DISTRIBUIDOS
+SERVIDOR PARA EL JUEGO PARQUES (PROYECTO FINAL SISTEMAS DISTRIBUIDOS)
 
-SOLICITUDES DE ENTRADA
-{"tipo": "solicitud_color"}
-{"tipo": "seleccion_color", "nombre": "Sarah", "color": "Red"}
-{"tipo": "solicitud_iniciar_partida"}
-{"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
-{"tipo": "sacar_ficha", "ficha": "F1"}
-{"tipo": "sacar_carcel", "ficha": "F1"}
-{"tipo": "mover_ficha", "ficha": "F1"}
-{"tipo": "solicitud_bot"}
+ELABORADO POR:
+Johan Fernando Acuña Pérez
+Sarah Sofia Palacio Vanegas
+Santiago Posada Florez
+Cristian Andres Grajales Perez
 
-RESPUESTAS DE SALIDA
-{"tipo": "denegado", "razon": "mensaje"}
-
-BROADCAST DE SALIDA
-{"tipo": "conexion", "cliente": self.address}
-{"tipo": "desconexion", "cliente": self.address}
-{"tipo": "finalizar", "ganador": "Red"}
-{   
-    "turno_actual" : "Red",
-    "solicitud_esperada" : "lanzar_dados",
-    "estado_partida" : "lobby",
-    "ultimos_dados" : {
-        "D1":5,
-        "D2":1
-    },
-    "ultima_ficha" : "F2",
-    "ultimo_turno" : "Blue",
-    "jugadores" : [
-        {
-            "nombre":"Juan",
-            "color":"Red",
-            "fichas": {
-                "F1": "Carcel",
-                "F2": "Carcel",
-                "F3": "Carcel",
-                "F4": "Carcel"
-            },
-            "contadores_fichas": {
-                "F1": 0,
-                "F2": 0,
-                "F3": 0,
-                "F4": 0
-            }
-        }
-    ]
-}
+Nota: Ver 'estructura.txt' para conocer la estructura de los mensajes
+Nota 2: Ver 'tablero.png' para conocer la estructura del tablero (Los colores Blue y Yellow estan invertidos)
 '''
 
 # Librerias
@@ -54,6 +16,26 @@ import socket
 import threading
 import json
 import time
+
+# Variable para definir si se juega en local
+local = True
+
+# Cambio de IPs 
+if local:
+    # IP servidor privada
+    IP_SERVER_PRIVADA = "localhost"
+    # IP bot publica
+    IP_BOT_PUBLICA = "localhost"
+else:
+    # IP servidor privada
+    IP_SERVER_PRIVADA = "172.31.9.104"
+    # IP bot publica
+    IP_BOT_PUBLICA = "3.138.143.80"
+
+# Puerto servidor
+PORT_SERVER = 8001   
+# Puerto bot
+PORT_BOT = 8002
 
 # Clase para manejar a los clientes
 class Cliente(threading.Thread):
@@ -176,9 +158,9 @@ class Cliente(threading.Thread):
 
     # El cliente añade un bot {"tipo": "solicitud_bot"}
     def procesar_solicitud_bot(self, informacion):
-       # Se valida la congruencia de los argumentos
+        # Se valida la congruencia de los argumentos
         respuesta = None
-        if len(hilos_clientes) > 3:
+        if len(hilos_clientes) == 4:
             respuesta = {"tipo": "denegado", "razon": "maximo de jugadores alcanzado"}
 
         # Se rechaza o se ejecuta la solicitud
@@ -187,9 +169,13 @@ class Cliente(threading.Thread):
             self.enviar_respuesta(respuesta)
         else:
             try:
-                # Se envia el mensaje al BotAI
+                # Se crea la conexion con el bot
+                servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                servidor_bot.connect((IP_BOT_PUBLICA, PORT_BOT))
+                # Se envia el mensaje al bot
                 mensaje = {"tipo": "Activar_bot"}
                 servidor_bot.sendall(json.dumps(mensaje).encode('utf-8'))
+                time.sleep(0.1)
             except:
                 print("[DENEGADO]: No se pudo conectar con el bot")
                 respuesta = {"tipo": "denegado", "razon": "no se pudo conectar con el bot"}
@@ -962,18 +948,11 @@ lock = threading.Lock()
 
 # Se crea el socket para recibir clientes
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind(("172.31.9.104", 8001))
+servidor.bind((IP_SERVER_PRIVADA, PORT_SERVER))
 servidor.listen(10)
 
 # Se imprime el mensaje en el servidor
-print(f"[SERVIDOR INICIADO (172.31.9.104:{8001})]")
-
-# Se crea el socket para conectarse al bot
-servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor_bot.connect(("3.145.99.214", 8002))
-
-# Se imprime el mensaje en el servidor
-print(f"[CONEXION AL BOT INICIADA (3.145.99.214: {8002})]")
+print(f"[SERVIDOR INICIADO ({IP_SERVER_PRIVADA}:{PORT_SERVER})]")
 
 # Se inicializan las variables globales
 id_broadcast = 0 # Identificador de los mensajes broadcast

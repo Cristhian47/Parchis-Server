@@ -1,17 +1,35 @@
 import socket
 import threading
 import json
-import time
 import random
 from queue import Queue
-import queue
-    
+
+# Variable para definir si se juega en local
+local = True
+
+# Cambio de IPs 
+if local:
+    # IP servidor publica
+    IP_SERVER_PUBLICA = "localhost"
+    # IP bot privada
+    IP_BOT_PRIVADA = "localhost"
+else:
+    # IP servidor publica
+    IP_SERVER_PUBLICA = "3.17.187.70"
+    # IP bot privada
+    IP_BOT_PRIVADA = "172.31.1.101"
+
+# Puerto servidor
+PORT_SERVER = 8001   
+# Puerto bot
+PORT_BOT = 8002
+
 #Bots iniciaados para funcionar
 list_bots = []
 
 #conexion para el bot
 servidor_bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor_bot.bind(("172.31.1.101", 8002))
+servidor_bot.bind((IP_BOT_PRIVADA, PORT_BOT))
 servidor_bot.listen(10)
 
 class BOT(threading.Thread):
@@ -29,7 +47,7 @@ class BOT(threading.Thread):
     #Activamos la conexion con el servidor principal
     def activar_conexion(self):
         self.bot = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bot.connect(("3.17.187.70", 8001))
+        self.bot.connect((IP_SERVER_PUBLICA, PORT_SERVER))
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, informacion):
@@ -326,7 +344,7 @@ cerrar_conexion_hilo = threading.Thread(target=cerrar_conexion)
 cerrar_conexion_hilo.start()
 
 #Cola para recibir mensajes
-message_queue = queue.Queue()
+message_queue = Queue()
 
 def handle_message():
     while True:

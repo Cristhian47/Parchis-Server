@@ -1,3 +1,20 @@
+SOLICITUDES DE ENTRADA
+{"tipo": "solicitud_color"}
+{"tipo": "seleccion_color", "nombre": "Sarah", "color": "Red"}
+{"tipo": "solicitud_iniciar_partida"}
+{"tipo": "lanzar_dados", "dados": {"D1": 4, "D2": 1}}
+{"tipo": "sacar_ficha", "ficha": "F1"}
+{"tipo": "sacar_carcel", "ficha": "F1"}
+{"tipo": "mover_ficha", "ficha": "F1"}
+{"tipo": "solicitud_bot"}
+
+RESPUESTAS DE SALIDA
+{"tipo": "denegado", "razon": "mensaje"}
+
+BROADCAST DE SALIDA
+{"tipo": "conexion", "cliente": self.address}
+{"tipo": "desconexion", "cliente": self.address}
+{"tipo": "finalizar", "ganador": "Red"}
 {   
     "turno_actual" : "Red",
     "solicitud_esperada" : "lanzar_dados",

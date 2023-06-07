@@ -2,15 +2,28 @@
 import socket
 import threading
 import json
-import IP
 from queue import Queue
+
+# Variable para definir si se juega en local
+local = True
+
+# Cambio de IPs 
+if local:
+    # IP servidor publica
+    IP_SERVER_PUBLICA = "localhost"
+else:
+    # IP servidor publica
+    IP_SERVER_PUBLICA = "3.17.187.70"
+
+# Puerto servidor
+PORT_SERVER = 8001
 
 cola_mensajes = Queue()
 id_mensaje = 1
 
 # Conectarse al servidor
 cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect(("3.17.187.70", 8001))
+cliente.connect((IP_SERVER_PUBLICA, PORT_SERVER))
 
 #Funcion para el hilo de cliente
 def receive_messages():
