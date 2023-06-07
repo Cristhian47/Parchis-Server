@@ -59,7 +59,7 @@ class BOT(threading.Thread):
                 print(informacion)
             elif informacion['tipo'] == "desconexion":
                 if informacion['estado_partida'] == "lobby":
-                    if informacion['jugador'] == 1:
+                    if informacion['jugadores'] == 1:
                         print(f"{self.nombre} desconectado")
                         self.bot.close()
                         self.cerrar_conexion()
