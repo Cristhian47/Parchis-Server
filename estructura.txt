@@ -13,7 +13,12 @@ RESPUESTAS DE SALIDA
 
 BROADCAST DE SALIDA
 {"tipo": "conexion", "cliente": self.address}
-{"tipo": "desconexion", "cliente": self.address}
+{
+    "tipo": "desconexion",
+    "cliente": self.address,
+    "jugadores": 4,
+    "estado_partida" : "lobby"
+}
 {"tipo": "finalizar", "ganador": "Red"}
 {   
     "turno_actual" : "Red",

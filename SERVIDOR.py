@@ -33,7 +33,7 @@ else:
     IP_BOT_PUBLICA = "3.138.143.80"
 
 # Puerto servidor
-PORT_SERVER = 8001   
+PORT_SERVER = 8001
 # Puerto bot
 PORT_BOT = 8002
 
@@ -602,7 +602,7 @@ class Cliente(threading.Thread):
         hilos_clientes.remove(self)
 
         # Se envia el mensaje a todos los clientes
-        mensaje = {"tipo": "desconexion", "cliente": self.address}
+        mensaje = {"tipo": "desconexion", "cliente": self.address, "jugadores": len(hilos_clientes), "estado_partida" : estado_partida}
         broadcast(mensaje)
 
         if estado_partida == "lobby":
