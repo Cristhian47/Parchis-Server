@@ -374,8 +374,6 @@ handler_thread = threading.Thread(target=handle_message)
 handler_thread.start()
 
 # Crear un conjunto de hilos para procesar los mensajes en la cola
-NUM_THREADS = 4  # Puedes ajustar la cantidad de hilos según tus necesidades
-for _ in range(NUM_THREADS):
-    worker_thread = threading.Thread(target=message_handler)
-    worker_thread.start()
+worker_thread = threading.Thread(target=message_handler)
+worker_thread.start()
 
