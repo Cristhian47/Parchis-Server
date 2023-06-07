@@ -329,10 +329,11 @@ class BOT(threading.Thread):
 #Hilo que se encargue de borrar hilos que ya acabaron su ejecucion
 def borrar_hilos():
     while True:
-        for index in list_bots:
-            if index.is_alive() == False:
-                list_bots.remove(index)
-                print(len(list_bots))
+        if len(list_bots) > 0:
+            for index in list_bots:
+                if index.is_alive() == False:
+                    list_bots.remove(index)
+                    print(len(list_bots))
 
 #Cola para peticiones de cerrar hilo}
 cola_cerrar_hilo = Queue()
