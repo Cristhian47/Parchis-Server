@@ -713,10 +713,12 @@ class Cliente(threading.Thread):
                     else: 
                         print(f"[{self.address}, {self.color}]: Desconexión tipo (1)")
                     # Se termina la conexion
+                    lock.acquire()
                     if estado_partida != "finalizada" and self in hilos_clientes:
-                        lock.acquire()
                         self.cerrar_conexion()
-                        lock.release()
+                    if self in hilos_clientes:
+                        hilos_clientes.remove(self)
+                    lock.release()
                     # Se termina el hilo
                     print(f"[{self.address}]: Hilo terminado")
                     break
@@ -727,10 +729,12 @@ class Cliente(threading.Thread):
                 else: 
                     print(f"[{self.address}, {self.color}]: Desconexión tipo (2)")
                 # Se termina la conexion
+                lock.acquire()
                 if estado_partida != "finalizada" and self in hilos_clientes:
-                    lock.acquire()
                     self.cerrar_conexion()
-                    lock.release()
+                if self in hilos_clientes:
+                    hilos_clientes.remove(self)
+                lock.release()
                 # Se termina el hilo
                 print(f"[{self.address}]: Hilo terminado")
                 break
@@ -934,7 +938,7 @@ def recibir_clientes():
             # Se imprime el mensaje en el servidor
             print(f"[{address}]: Conexión establecida")
             # Se envia el mensaje a todos los clientes
-            mensaje = {"tipo": "conexion", "cliente": address}
+            mensaje = {"tipo": "conexion", "cliente": address, "jugadores": len(hilos_clientes), "estado_partida" : estado_partida}
             broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
