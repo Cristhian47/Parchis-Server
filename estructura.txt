@@ -9,6 +9,7 @@ SOLICITUDES DE ENTRADA
 {"tipo": "solicitud_bot"}
 
 RESPUESTAS DE SALIDA
+{"Yellow": True , "Blue": True, "Green": True, "Red": True}
 {"tipo": "denegado", "razon": "mensaje"}
 
 BROADCAST DE SALIDA
