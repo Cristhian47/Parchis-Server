@@ -69,20 +69,25 @@ def procesar_mensaje(mensaje):
             cliente = mensaje["cliente"]
             jugadores = mensaje["jugadores"]
             estado_partida = mensaje["estado_partida"]
-            nuevo_mensaje = f"Se ha conectado el cliente {cliente}. Hay {jugadores} jugadores en la partida. Estado de la partida: {estado_partida}."
+            informacion = f"Se ha conectado el cliente {cliente}.\nHay {jugadores} jugadores en la partida.\nEstado de la partida: {estado_partida}."
+            messagebox.showinfo("Mensaje recibido", informacion)
         elif tipo == "desconexion":
             cliente = mensaje["cliente"]
             jugadores = mensaje["jugadores"]
             estado_partida = mensaje["estado_partida"]
-            nuevo_mensaje = f"Se ha desconectado el cliente {cliente}. Quedan {jugadores} jugadores en la partida. Estado de la partida: {estado_partida}."
+            informacion = f"Se ha desconectado el cliente {cliente}.\nQuedan {jugadores} jugadores en la partida.\nEstado de la partida: {estado_partida}."
+            messagebox.showinfo("Mensaje recibido", informacion)
         elif tipo == "finalizar":
             ganador = mensaje["ganador"]
-            nuevo_mensaje = f"La partida ha finalizado. El ganador es {ganador}."
+            informacion = f"La partida ha finalizado.\nEl ganador es {ganador}."
+            messagebox.showinfo("Mensaje recibido", informacion)
         elif tipo == "denegado":
             razon = mensaje["razon"]
-            nuevo_mensaje = f"La solicitud ha sido denegada. Razón: {razon}."
+            informacion = f"La solicitud ha sido denegada.\nRazón: {razon}."
+            messagebox.showinfo("Mensaje recibido", informacion)
         else:
-            nuevo_mensaje = "Mensaje desconocido"
+            informacion = "Mensaje desconocido"
+            messagebox.showinfo("Mensaje recibido", informacion)
     else:
         if "turno_actual" in mensaje:
             turno_actual = mensaje["turno_actual"]
@@ -92,12 +97,12 @@ def procesar_mensaje(mensaje):
             ultima_ficha = mensaje["ultima_ficha"]
             ultimo_turno = mensaje["ultimo_turno"]
             jugadores = mensaje["jugadores"]
-            
+            # Crear mensaje
             nuevo_mensaje = f"Es el turno de {turno_actual}.\nSe espera una solicitud de {solicitud_esperada}.\nEl estado de la partida es {estado_partida}.\n"
             nuevo_mensaje += f"Últimos dados lanzados: D1={ultimos_dados['D1']}, D2={ultimos_dados['D2']}.\n"
             nuevo_mensaje += f"Última ficha movida: {ultima_ficha}.\n"
             nuevo_mensaje += f"Último turno jugado por {ultimo_turno}.\n"
-            
+            # Mostrar jugadores
             for jugador in jugadores:
                 nombre = jugador["nombre"]
                 color = jugador["color"]
@@ -112,16 +117,18 @@ def procesar_mensaje(mensaje):
                 nuevo_mensaje += "Contadores de fichas:\n"
                 for ficha, contador in contadores_fichas.items():
                     nuevo_mensaje += f"- {ficha}: {contador}\n"
+            # Mostrar mensaje
+            mostrar_respuesta(nuevo_mensaje)
         elif "Blue" in mensaje:
-            # {"Yellow": True , "Blue": True, "Green": True, "Red": True}
             blue = mensaje["Blue"]
             yellow = mensaje["Yellow"]
             green = mensaje["Green"]
             red = mensaje["Red"]
-            nuevo_mensaje = f"Colores disponibles:\nBlue: {blue}\nYellow: {yellow}\nGreen: {green}\nRed: {red}\n"
+            informacion = f"Colores disponibles:\nBlue: {blue}\nYellow: {yellow}\nGreen: {green}\nRed: {red}\n"
+            messagebox.showinfo("Mensaje recibido", informacion)
         else:
-            nuevo_mensaje = "Mensaje desconocido"
-    mostrar_respuesta(nuevo_mensaje)
+            informacion = "Mensaje desconocido"
+            messagebox.showinfo("Mensaje recibido", informacion)
 
 #Hilo para estar en constante funcionamiento
 thread = threading.Thread(target=receive_messages)
@@ -133,7 +140,7 @@ thread2.start()
 def solicitud_color():
     solicitud = {"tipo": "solicitud_color"}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
-    messagebox.showinfo("Solicitud enviada", f"Solicitud: Solicitud color")
+    #messagebox.showinfo("Solicitud enviada", f"Solicitud: Solicitud color")
 
 #Enviar solicitud de eleccion de color
 def seleccion_color():
@@ -149,9 +156,14 @@ def seleccion_color():
         ventana_emergente = tk.Tk()
         ventana_emergente.title("Elegir color")
         # Crear los botones de colores
-        for color in ["Red", "Green", "Blue", "Yellow"]:
-            boton = tk.Button(ventana_emergente, text=color, command=lambda: (enviar_datos(nombre, color), ventana_emergente.destroy()), padx=20)
-            boton.pack(pady=5)
+        boton = tk.Button(ventana_emergente, text="Red", command=lambda: (enviar_datos(nombre, "Red"), ventana_emergente.destroy()), padx=20)
+        boton.pack(pady=5)
+        boton2 = tk.Button(ventana_emergente, text="Blue", command=lambda: (enviar_datos(nombre, "Blue"), ventana_emergente.destroy()), padx=20)
+        boton2.pack(pady=5)
+        boton3 = tk.Button(ventana_emergente, text="Green", command=lambda: (enviar_datos(nombre, "Green"), ventana_emergente.destroy()), padx=20)
+        boton3.pack(pady=5)
+        boton3 = tk.Button(ventana_emergente, text="Yellow", command=lambda: (enviar_datos(nombre, "Yellow"), ventana_emergente.destroy()), padx=20)
+        boton3.pack(pady=5)
 
     # Crear la ventana emergente
     ventana_emergente = tk.Tk()
@@ -171,7 +183,7 @@ def seleccion_color():
 def solicitud_iniciar_partida():
     solicitud = {"tipo": "solicitud_iniciar_partida"}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
-    messagebox.showinfo("Solicitud enviada", f"Solicitud: Iniciar partida")
+    #messagebox.showinfo("Solicitud enviada", f"Solicitud: Iniciar partida")
 
 #Enviar solicitud de lanzar los dados
 def solicitud_lanzar_dados():
@@ -179,7 +191,7 @@ def solicitud_lanzar_dados():
     d2 = random.randint(1, 6)
     solicitud = {"tipo": "lanzar_dados", "dados": {"D1": d1, "D2": d2}}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
-    messagebox.showinfo("Solicitud enviada", f"Solicitud: Lanzar dados \n\nDados: {d1} y {d2}")
+    #messagebox.showinfo("Solicitud enviada", f"Solicitud: Lanzar dados \n\nDados: {d1} y {d2}")
 
 #Enviar solicitud de sacar ficha del tablero (ficha en estado de meta)
 def solicitud_sacar_ficha():
@@ -188,7 +200,7 @@ def solicitud_sacar_ficha():
         solicitud = {"tipo": "sacar_ficha", "ficha": ficha}
         cliente.sendall(json.dumps(solicitud).encode('utf-8'))
         # Mostrar los valores en un mensaje de información
-        messagebox.showinfo("Solicitud enviada", f"Solicitud: Sacar ficha")
+        #messagebox.showinfo("Solicitud enviada", f"Solicitud: Sacar ficha")
         # Cerrar la ventana emergente
         ventana_emergente.destroy()
 
@@ -204,7 +216,7 @@ def solicitud_sacar_ficha():
 def solicitud_sacar_carcel():
     solicitud = {"tipo": "sacar_carcel", "ficha": "F1"}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
-    messagebox.showinfo("Solicitud enviada", f"Solicitud: Sacar carcel")
+    #messagebox.showinfo("Solicitud enviada", f"Solicitud: Sacar carcel")
 
 #Enviar solicitud de mover ficha en el tablero
 def solicitud_mover_ficha():
@@ -213,7 +225,7 @@ def solicitud_mover_ficha():
         solicitud = {"tipo": "mover_ficha", "ficha": ficha}
         cliente.sendall(json.dumps(solicitud).encode('utf-8'))
         # Mostrar los valores en un mensaje de información
-        messagebox.showinfo("Solicitud enviada", f"Solicitud: Mover ficha")
+        #messagebox.showinfo("Solicitud enviada", f"Solicitud: Mover ficha")
         # Cerrar la ventana emergente
         ventana_emergente.destroy()
 
@@ -229,7 +241,7 @@ def solicitud_mover_ficha():
 def solicitud_bot():
     solicitud = {"tipo": "solicitud_bot"}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
-    messagebox.showinfo("Solicitud enviada", f"Solicitud: Activar bot")
+    #messagebox.showinfo("Solicitud enviada", f"Solicitud: Activar bot")
 
 # Crear la ventana principal
 ventana = tk.Tk()
@@ -252,14 +264,14 @@ for i, solicitud in enumerate(solicitudes):
     boton = tk.Button(ventana, text=solicitud, command=lambda solicitud=solicitud: solicitudes[solicitud]())
     boton.grid(row=i, column=0, pady=5)
 
+# Agregar imagen del tablero
+imagen_tablero = tk.PhotoImage(file="tablero.png")
+tablero_label = tk.Label(ventana, image=imagen_tablero)
+tablero_label.grid(row=0, column=1, rowspan=len(solicitudes) + 1, padx=10)
+
 # Agregar área para mostrar la respuesta del servidor
 respuesta_texto = tk.Text(ventana, width=40, height=25)
 respuesta_texto.grid(row=len(solicitudes), column=0, pady=5)
-
-# Agregar imagen del tablero
-imagen_tablero = tk.PhotoImage(file="Tablero_right.png")
-tablero_label = tk.Label(ventana, image=imagen_tablero)
-tablero_label.grid(row=0, column=1, rowspan=len(solicitudes) + 1, padx=10)
 
 # Función para mostrar la respuesta del servidor
 def mostrar_respuesta(respuesta):

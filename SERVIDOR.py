@@ -8,7 +8,7 @@ Santiago Posada Florez
 Cristian Andres Grajales Perez
 
 Nota: Ver 'estructura.txt' para conocer la estructura de los mensajes
-Nota 2: Ver 'tablero.png' para conocer la estructura del tablero (Los colores Blue y Yellow estan invertidos)
+Nota 2: Ver 'tablero.png' para conocer la estructura del tablero
 '''
 
 # Librerias
@@ -202,7 +202,7 @@ class Cliente(threading.Thread):
         elif color not in ["Yellow", "Blue", "Green", "Red"]:
             respuesta = {"tipo": "denegado", "razon": "color no valido"}
         elif not colores_disponibles[color]:
-            respuesta = {"tipo": "denegado", "razon": "color no disponible"}
+            respuesta = {"tipo": "denegado", "razon": f"el color {color} no esta disponible"}
 
         # Se rechaza o se ejecuta la solicitud
         if respuesta:
