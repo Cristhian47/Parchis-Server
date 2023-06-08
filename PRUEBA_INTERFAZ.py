@@ -94,14 +94,15 @@ def procesar_mensaje(mensaje):
             solicitud_esperada = mensaje["solicitud_esperada"]
             estado_partida = mensaje["estado_partida"]
             ultimos_dados = mensaje["ultimos_dados"]
-            ultima_ficha = mensaje["ultima_ficha"]
-            ultimo_turno = mensaje["ultimo_turno"]
             jugadores = mensaje["jugadores"]
             # Crear mensaje
-            nuevo_mensaje = f"Es el turno de {turno_actual}.\nSe espera una solicitud de {solicitud_esperada}.\nEl estado de la partida es {estado_partida}.\n"
-            nuevo_mensaje += f"Últimos dados lanzados: D1={ultimos_dados['D1']}, D2={ultimos_dados['D2']}.\n"
-            nuevo_mensaje += f"Última ficha movida: {ultima_ficha}.\n"
-            nuevo_mensaje += f"Último turno jugado por {ultimo_turno}.\n"
+            nuevo_mensaje = f"El estado de la partida es {estado_partida}.\n\n"
+            if turno_actual != "":
+                nuevo_mensaje += f"Es el turno de {turno_actual}.\n"
+            if solicitud_esperada != "":
+                nuevo_mensaje += f"Se espera una solicitud de {solicitud_esperada}.\n"
+            if ultimos_dados['D1'] != 0 and ultimos_dados['D2'] != 0:
+                nuevo_mensaje += f"\nÚltimos dados lanzados: D1={ultimos_dados['D1']}, D2={ultimos_dados['D2']}.\n"
             # Mostrar jugadores
             for jugador in jugadores:
                 nombre = jugador["nombre"]
@@ -113,10 +114,10 @@ def procesar_mensaje(mensaje):
                 nuevo_mensaje += f"Color: {color}\n"
                 nuevo_mensaje += "Fichas:\n"
                 for ficha, estado in fichas.items():
-                    nuevo_mensaje += f"- {ficha}: {estado}\n"
+                    nuevo_mensaje += f"{ficha}: {estado}\n"
                 nuevo_mensaje += "Contadores de fichas:\n"
                 for ficha, contador in contadores_fichas.items():
-                    nuevo_mensaje += f"- {ficha}: {contador}\n"
+                    nuevo_mensaje += f"{ficha}: {contador}\n"
             # Mostrar mensaje
             mostrar_respuesta(nuevo_mensaje)
         elif "Blue" in mensaje:
@@ -149,7 +150,7 @@ def seleccion_color():
         solicitud = {"tipo": "seleccion_color", "nombre": nombre, "color": color}
         cliente.sendall(json.dumps(solicitud).encode('utf-8'))
         # Mostrar los valores en un mensaje de información
-        messagebox.showinfo("Solicitud enviada", f"Solicitud: Seleccion color")
+        #messagebox.showinfo("Solicitud enviada", f"Solicitud: Seleccion color")
 
     def elegir_color(nombre):
         # Crear la ventana emergente
@@ -262,21 +263,20 @@ solicitudes = {
 # Crear botones de solicitudes
 for i, solicitud in enumerate(solicitudes):
     boton = tk.Button(ventana, text=solicitud, command=lambda solicitud=solicitud: solicitudes[solicitud]())
-    boton.grid(row=i, column=0, pady=5)
+    boton.grid(row=i, column=0, padx=10, pady=10)
 
 # Agregar imagen del tablero
 imagen_tablero = tk.PhotoImage(file="tablero.png")
 tablero_label = tk.Label(ventana, image=imagen_tablero)
-tablero_label.grid(row=0, column=1, rowspan=len(solicitudes) + 1, padx=10)
+tablero_label.grid(row=0, column=1, rowspan=len(solicitudes))
 
 # Agregar área para mostrar la respuesta del servidor
-respuesta_texto = tk.Text(ventana, width=40, height=25)
-respuesta_texto.grid(row=len(solicitudes), column=0, pady=5)
+respuesta_label = tk.Label(ventana, width=30, height=44)
+respuesta_label.grid(row=0, column=2, rowspan=len(solicitudes), padx=10, pady=10)
 
 # Función para mostrar la respuesta del servidor
 def mostrar_respuesta(respuesta):
-    respuesta_texto.delete(1.0, tk.END)
-    respuesta_texto.insert(tk.END, respuesta)
+    respuesta_label.config(text=respuesta)
 
 # Ejecutar la ventana principal
 ventana.mainloop()
