@@ -1,4 +1,3 @@
-
 import socket
 import threading
 import json
@@ -67,15 +66,12 @@ def procesar_mensaje(mensaje):
         tipo = mensaje["tipo"]
         if tipo == "conexion":
             cliente = mensaje["cliente"]
-            jugadores = mensaje["jugadores"]
-            estado_partida = mensaje["estado_partida"]
-            informacion = f"Se ha conectado el cliente {cliente}.\nHay {jugadores} jugadores en la partida.\nEstado de la partida: {estado_partida}."
+            informacion = f"Se ha conectado el cliente {cliente}."
             messagebox.showinfo("Mensaje recibido", informacion)
         elif tipo == "desconexion":
             cliente = mensaje["cliente"]
             jugadores = mensaje["jugadores"]
-            estado_partida = mensaje["estado_partida"]
-            informacion = f"Se ha desconectado el cliente {cliente}.\nQuedan {jugadores} jugadores en la partida.\nEstado de la partida: {estado_partida}."
+            informacion = f"Se ha desconectado el cliente {cliente}.\nQuedan {jugadores} jugadores en la partida."
             messagebox.showinfo("Mensaje recibido", informacion)
         elif tipo == "finalizar":
             ganador = mensaje["ganador"]
@@ -100,7 +96,7 @@ def procesar_mensaje(mensaje):
             if turno_actual != "":
                 nuevo_mensaje += f"Es el turno de {turno_actual}.\n"
             if solicitud_esperada != "":
-                nuevo_mensaje += f"Se espera una solicitud de {solicitud_esperada}.\n"
+                nuevo_mensaje += f"Se espera la solicitud {solicitud_esperada}.\n"
             if ultimos_dados['D1'] != 0 and ultimos_dados['D2'] != 0:
                 nuevo_mensaje += f"\nÚltimos dados lanzados: D1={ultimos_dados['D1']}, D2={ultimos_dados['D2']}.\n"
             # Mostrar jugadores
@@ -114,10 +110,10 @@ def procesar_mensaje(mensaje):
                 nuevo_mensaje += f"Color: {color}\n"
                 nuevo_mensaje += "Fichas:\n"
                 for ficha, estado in fichas.items():
-                    nuevo_mensaje += f"{ficha}: {estado}\n"
+                    nuevo_mensaje += f"  {ficha}: {estado}\n"
                 nuevo_mensaje += "Contadores de fichas:\n"
                 for ficha, contador in contadores_fichas.items():
-                    nuevo_mensaje += f"{ficha}: {contador}\n"
+                    nuevo_mensaje += f"  {ficha}: {contador}\n"
             # Mostrar mensaje
             mostrar_respuesta(nuevo_mensaje)
         elif "Blue" in mensaje:
@@ -271,12 +267,13 @@ tablero_label = tk.Label(ventana, image=imagen_tablero)
 tablero_label.grid(row=0, column=1, rowspan=len(solicitudes))
 
 # Agregar área para mostrar la respuesta del servidor
-respuesta_label = tk.Label(ventana, width=30, height=44)
-respuesta_label.grid(row=0, column=2, rowspan=len(solicitudes), padx=10, pady=10)
+respuesta_texto = tk.Text(ventana, width=40, height=44, bg=ventana.cget("bg"))
+respuesta_texto.grid(row=0, column=2, rowspan=len(solicitudes), padx=10, pady=10)
 
 # Función para mostrar la respuesta del servidor
 def mostrar_respuesta(respuesta):
-    respuesta_label.config(text=respuesta)
+    respuesta_texto.delete(1.0, tk.END)
+    respuesta_texto.insert(tk.END, respuesta)
 
 # Ejecutar la ventana principal
 ventana.mainloop()

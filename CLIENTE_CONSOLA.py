@@ -1,8 +1,8 @@
-
 import socket
 import threading
 import json
 from queue import Queue
+import random
 
 # Variable para definir si se juega en local
 local = True
@@ -13,7 +13,7 @@ if local:
     IP_SERVER_PUBLICA = "localhost"
 else:
     # IP servidor publica
-    IP_SERVER_PUBLICA = "3.17.187.70"
+    IP_SERVER_PUBLICA = "3.15.208.30"
 
 # Puerto servidor
 PORT_SERVER = 8001
@@ -82,8 +82,8 @@ def solicitud_iniciar_partida():
 
 #Enviar solicitud de lanzar los dados
 def solicitud_lanzar_dados():
-    d1 = int(input("Ingrese valor del dado 1: "))
-    d2 = int(input("Ingrese valor del dado 2: "))
+    d1 = random.randint(1,6)
+    d2 = random.randint(1,6)
     solicitud = {"tipo": "lanzar_dados", "dados": {"D1": d1, "D2": d2}}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
 
@@ -110,35 +110,34 @@ def solicitud_bot():
     solicitud = {"tipo": "solicitud_bot"}
     cliente.sendall(json.dumps(solicitud).encode('utf-8'))
 
-print("1. solicitud_color")
-print("2. seleccion_color")
-print("3. solicitud_iniciar_partida")
-print("4. solicitud_lanzar_dados")
-print("5. solicitud_sacar_ficha")
-print("6. solicitud_sacar_carcel")
-print("7. solicitud_mover_ficha")
-print("8. solicitud_bot")
+def mostrar_menu():
+    print("1. solicitud_color")
+    print("2. seleccion_color")
+    print("3. solicitud_iniciar_partida")
+    print("4. solicitud_lanzar_dados")
+    print("5. solicitud_sacar_ficha")
+    print("6. solicitud_sacar_carcel")
+    print("7. solicitud_mover_ficha")
+    print("8. solicitud_bot")
+
+opciones = {
+    1: solicitud_color,
+    2: seleccion_color,
+    3: solicitud_iniciar_partida,
+    4: solicitud_lanzar_dados,
+    5: solicitud_sacar_ficha,
+    6: solicitud_sacar_carcel,
+    7: solicitud_mover_ficha,
+    8: solicitud_bot
+}
+
+mostrar_menu()
 while True:
-    solicitud = int(input("\nIngrese tipo de solicitud... "))
-    if solicitud == 1:
-        solicitud_color()
-    elif solicitud == 2:
-        seleccion_color()
-    elif solicitud == 3:
-        solicitud_iniciar_partida()
-    elif solicitud == 4:
-        solicitud_lanzar_dados()
-    elif solicitud == 5:
-        solicitud_sacar_ficha()
-    elif solicitud == 6:
-        solicitud_sacar_carcel()
-    elif solicitud == 7:
-        solicitud_mover_ficha()
-    elif solicitud == 8:
-        solicitud_bot()
-
-
-
-
-
-
+    try:
+        solicitud = int(input("\nIngrese tipo de solicitud... "))
+        if solicitud in opciones:
+            opciones[solicitud]()
+        else:
+            print("Error: Opción no válida.")
+    except ValueError:
+        print("Error: Debes ingresar un número válido.")

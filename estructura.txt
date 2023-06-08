@@ -15,9 +15,7 @@ RESPUESTAS DE SALIDA
 BROADCAST DE SALIDA
 {
     "tipo": "conexion",
-    "cliente": self.address,
-    "jugadores": 4,
-    "estado_partida" : "lobby"
+    "cliente": self.address
 }
 {
     "tipo": "desconexion",

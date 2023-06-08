@@ -938,7 +938,7 @@ def recibir_clientes():
             # Se imprime el mensaje en el servidor
             print(f"[{address}]: Conexión establecida")
             # Se envia el mensaje a todos los clientes
-            mensaje = {"tipo": "conexion", "cliente": address, "jugadores": len(hilos_clientes), "estado_partida" : estado_partida}
+            mensaje = {"tipo": "conexion", "cliente": address}
             broadcast(mensaje)
             # Crea un hilo para manejar al cliente
             thread = Cliente(connection, address)
