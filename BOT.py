@@ -15,7 +15,7 @@ if local:
     IP_BOT_PRIVADA = "localhost"
 else:
     # IP servidor publica
-    IP_SERVER_PUBLICA = "3.17.187.70"
+    IP_SERVER_PUBLICA = "3.15.208.30"
     # IP bot privada
     IP_BOT_PRIVADA = "172.31.1.101"
 
@@ -217,8 +217,6 @@ class BOT(threading.Thread):
                             for fichas_mias in mi_juego['fichas'].keys():
                                 if mi_juego['fichas'][fichas_mias] != 'Carcel' and mi_juego['fichas'][fichas_mias] != 'Meta':
                                     fichas_posibles.append(fichas_mias)
-                    print(len(fichas_posibles))
-                    print(informacion_jugadores)
                     if len(fichas_posibles) > 0:
                         ficha_aleatoria = random.choice(fichas_posibles)
                         dados_usados = True

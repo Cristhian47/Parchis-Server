@@ -30,7 +30,7 @@ else:
     # IP servidor privada
     IP_SERVER_PRIVADA = "172.31.9.104"
     # IP bot publica
-    IP_BOT_PUBLICA = "3.138.143.80"
+    IP_BOT_PUBLICA = "18.117.119.109"
 
 # Puerto servidor
 PORT_SERVER = 8001
