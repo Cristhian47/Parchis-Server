@@ -257,7 +257,7 @@ respuesta_texto = tk.Text(ventana, width=40, height=25)
 respuesta_texto.grid(row=len(solicitudes), column=0, pady=5)
 
 # Agregar imagen del tablero
-imagen_tablero = tk.PhotoImage(file="tablero.png")
+imagen_tablero = tk.PhotoImage(file="Tablero_right.png")
 tablero_label = tk.Label(ventana, image=imagen_tablero)
 tablero_label.grid(row=0, column=1, rowspan=len(solicitudes) + 1, padx=10)
 
