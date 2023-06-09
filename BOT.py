@@ -2,6 +2,7 @@ import socket
 import threading
 import json
 import random
+import time
 from queue import Queue
 
 # Variable para definir si se juega en local
@@ -51,6 +52,8 @@ class BOT(threading.Thread):
 
     # Que es lo  que viene en el mensaje
     def procesar_informacion(self, informacion):
+        #tiempo de espera para que el servidor no se sature
+        time.sleep(1)
         if informacion == "Rechazado: La partida ya inició.":
             self.cerrar_conexion()
 
