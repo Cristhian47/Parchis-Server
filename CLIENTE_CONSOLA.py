@@ -18,12 +18,16 @@ else:
 # Puerto servidor
 PORT_SERVER = 8001
 
+# Conectarse al servidor
+try:
+    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    cliente.connect((IP_SERVER_PUBLICA, PORT_SERVER))
+except:
+    print("Error: No se pudo conectar con el servidor.")
+    exit()
+
 cola_mensajes = Queue()
 id_mensaje = 1
-
-# Conectarse al servidor
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect((IP_SERVER_PUBLICA, PORT_SERVER))
 
 #Funcion para el hilo de cliente
 def receive_messages():
@@ -48,14 +52,82 @@ def manejar_mensajes():
                     if mensaje['id_broadcast'] == id_mensaje:
                         # Ejecuto la accion del mensaje
                         id_mensaje += 1
-                        print("Mensaje recibido: ", mensaje, "\n")
+                        procesar_mensaje(mensaje)
                     else:
                         # Devuelvo el mensaje a la cola
                         cola_mensajes.put(mensaje)
                 else:
-                    print("Mensaje recibido: ", mensaje, "\n")
+                    procesar_mensaje(mensaje)
             else:
-                print("Mensaje recibido: ", mensaje, "\n")
+                procesar_mensaje(mensaje)
+
+def procesar_mensaje(mensaje):
+    nuevo_mensaje = ""
+
+    if "tipo" in mensaje:
+        tipo = mensaje["tipo"]
+        if tipo == "conexion":
+            cliente = mensaje["cliente"]
+            informacion = f"Se ha conectado el cliente {cliente}.\n"
+            print("\nMensaje recibido:\n" + informacion)
+        elif tipo == "desconexion":
+            cliente = mensaje["cliente"]
+            jugadores = mensaje["jugadores"]
+            informacion = f"Se ha desconectado el cliente {cliente}.\nQuedan {jugadores} jugadores en la partida.\n"
+            print("\nMensaje recibido:\n" + informacion)
+        elif tipo == "finalizar":
+            ganador = mensaje["ganador"]
+            informacion = f"La partida ha finalizado.\nEl ganador es {ganador}.\n"
+            print("\nMensaje recibido:\n" + informacion)
+        elif tipo == "denegado":
+            razon = mensaje["razon"]
+            informacion = f"La solicitud ha sido denegada.\nRazón: {razon}.\n"
+            print("\nMensaje recibido:\n" + informacion)
+        else:
+            informacion = "Mensaje desconocido\n"
+            print("\nMensaje recibido:\n" + informacion)
+    else:
+        if "turno_actual" in mensaje:
+            turno_actual = mensaje["turno_actual"]
+            solicitud_esperada = mensaje["solicitud_esperada"]
+            estado_partida = mensaje["estado_partida"]
+            ultimos_dados = mensaje["ultimos_dados"]
+            jugadores = mensaje["jugadores"]
+            # Crear mensaje
+            nuevo_mensaje = f"El estado de la partida es {estado_partida}.\n"
+            if turno_actual != "":
+                nuevo_mensaje += f"Es el turno de {turno_actual}.\n"
+            if solicitud_esperada != "":
+                nuevo_mensaje += f"Se espera la solicitud {solicitud_esperada}.\n"
+            if ultimos_dados['D1'] != 0 and ultimos_dados['D2'] != 0:
+                nuevo_mensaje += f"\nÚltimos dados lanzados: D1={ultimos_dados['D1']}, D2={ultimos_dados['D2']}.\n"
+            # Mostrar jugadores
+            for jugador in jugadores:
+                nombre = jugador["nombre"]
+                color = jugador["color"]
+                fichas = jugador["fichas"]
+                contadores_fichas = jugador["contadores_fichas"]
+                
+                nuevo_mensaje += f"\nJugador: {nombre}\n"
+                nuevo_mensaje += f"Color: {color}\n"
+                nuevo_mensaje += "Fichas:\n"
+                for ficha, estado in fichas.items():
+                    nuevo_mensaje += f"  {ficha}: {estado}\n"
+                nuevo_mensaje += "Contadores de fichas:\n"
+                for ficha, contador in contadores_fichas.items():
+                    nuevo_mensaje += f"  {ficha}: {contador}\n"
+            # Mostrar mensaje
+            print("\nMensaje recibido:\n" + nuevo_mensaje)
+        elif "Blue" in mensaje:
+            blue = mensaje["Blue"]
+            yellow = mensaje["Yellow"]
+            green = mensaje["Green"]
+            red = mensaje["Red"]
+            informacion = f"Colores disponibles:\nBlue: {blue}\nYellow: {yellow}\nGreen: {green}\nRed: {red}\n"
+            print("\nMensaje recibido:\n" + informacion)
+        else:
+            informacion = "Mensaje desconocido"
+            print("\nMensaje recibido:\n" + informacion)
 
 #Hilo para estar en constante funcionamiento
 thread = threading.Thread(target=receive_messages)
@@ -119,6 +191,7 @@ def mostrar_menu():
     print("6. solicitud_sacar_carcel")
     print("7. solicitud_mover_ficha")
     print("8. solicitud_bot")
+    print("\nIngrese una opción... ")
 
 opciones = {
     1: solicitud_color,
@@ -134,7 +207,7 @@ opciones = {
 mostrar_menu()
 while True:
     try:
-        solicitud = int(input("\nIngrese tipo de solicitud... "))
+        solicitud = int(input())
         if solicitud in opciones:
             opciones[solicitud]()
         else:

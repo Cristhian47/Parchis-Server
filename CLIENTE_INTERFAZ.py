@@ -20,12 +20,16 @@ else:
 # Puerto servidor
 PORT_SERVER = 8001
 
+# Conectarse al servidor
+try:
+    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    cliente.connect((IP_SERVER_PUBLICA, PORT_SERVER))
+except:
+    print("Error: No se pudo conectar con el servidor.")
+    exit()
+
 cola_mensajes = Queue()
 id_mensaje = 1
-
-# Conectarse al servidor
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect((IP_SERVER_PUBLICA, PORT_SERVER))
 
 #Funcion para el hilo de cliente
 def receive_messages():
