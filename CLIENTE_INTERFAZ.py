@@ -9,7 +9,7 @@ import random
 # Variable para definir si se juega en local
 local = True
 
-# Cambio de IPs 
+# Cambio de IPs
 if local:
     # IP servidor publica
     IP_SERVER_PUBLICA = "localhost"
