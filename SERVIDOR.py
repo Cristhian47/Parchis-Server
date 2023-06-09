@@ -695,7 +695,9 @@ class Cliente(threading.Thread):
                 # Recibe los datos del cliente
                 mensaje = self.connection.recv(1024).decode('utf-8')
                 if mensaje and self in hilos_clientes:
+                    lock.acquire()
                     self.procesar_informacion(mensaje)
+                    lock.release()
                 else:
                     # Se imprime el mensaje en el servidor
                     if self.color == "":
