@@ -198,7 +198,7 @@ class Cliente(threading.Thread):
         respuesta = None
         if self.nombre != "" and self.color != "":
             respuesta = {"tipo": "denegado", "razon": "ya seleccionaste un color"}
-        elif nombre == "" or color == "" or nombre == None or color == None:
+        elif nombre == "" or color == "" or nombre == None or color == None or nombre == "null" or color == "null" or nombre == "Null" or color == "Null":
             respuesta = {"tipo": "denegado", "razon": "no seleccionaste un color"}   
         elif color not in ["Yellow", "Blue", "Green", "Red"]:
             respuesta = {"tipo": "denegado", "razon": "color no valido"}
