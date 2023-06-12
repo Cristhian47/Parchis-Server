@@ -376,8 +376,11 @@ def handle_message():
 def message_handler():
     while True:
         connection, address = servidor_bot.accept()
-        informacion = connection.recv(1024).decode('utf-8')
-        message_queue.put(informacion)
+        try:
+            informacion = connection.recv(4096).decode('utf-8')
+            message_queue.put(informacion)
+        except:
+            pass
 
 # Crear un hilo para manejar los mensajes encolados de forma asíncrona
 handler_thread = threading.Thread(target=handle_message)
